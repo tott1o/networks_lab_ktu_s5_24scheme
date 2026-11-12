@@ -14,7 +14,7 @@ To configure and verify static routing across a multi-router internetwork (Figur
 ## 2. HARDWARE AND SOFTWARE REQUIREMENTS
 1. **Simulation Platform:** Cisco Packet Tracer (v8.x or above)
 2. **Simulated Devices:**
-   - 4 × Cisco Routers (2811 series) equipped with WIC-2T serial modules
+   - 4 × Cisco Routers (Cisco 1941 / 2911 ISR series; or Router-PT / 2811) equipped with HHWIC-2T serial modules
    - 3 × Workstations (PC-1, PC-2, PC-3)
    - 1 × Cisco Catalyst 2960 switch (for the shared Ethernet segment)
    - Cabling: Copper Straight-Through cables, Serial DCE/DTE cables
@@ -47,9 +47,9 @@ $$\text{\texttt{ip route }} \langle\text{destination-network}\rangle \;\langle\t
  [172.16.10.0/24]                [172.16.20.0/24]                 [172.16.40.0/24]              [172.16.50.0/24]
       Ethernet                      Serial WAN                       Serial WAN                      Ethernet
 [Router 2621] ============ [Router 2501A] ----------------- [Router 2501B] ----------------- [Router 2501C] === [PC-3]
-  Fa0/0: .1                 Fa0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Fa0/0: .1    .10
+  Gig0/0: .1                 Gig0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Gig0/0: .1    .10
       |                                                    |                                           
-    [PC-1]                                               Fa0/0: .1                                     
+    [PC-1]                                               Gig0/0: .1                                     
      .10                                                   |                                           
                                                          [PC-2] .10                                    
                                                     [172.16.30.0/24] LAN                               
@@ -61,14 +61,14 @@ $$\text{\texttt{ip route }} \langle\text{destination-network}\rangle \;\langle\t
 
 | Device | Interface | IP Address | Subnet Mask | Gateway | Description |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Router 2621** | `Fa0/0` | `172.16.10.1` | `255.255.255.0` | N/A | LAN 172.16.10.0/24 |
-| **Router 2501A**| `Fa0/0` | `172.16.10.2` | `255.255.255.0` | N/A | Uplink to 2621 |
+| **Router 2621** | `Gig0/0` | `172.16.10.1` | `255.255.255.0` | N/A | LAN 172.16.10.0/24 |
+| **Router 2501A**| `Gig0/0` | `172.16.10.2` | `255.255.255.0` | N/A | Uplink to 2621 |
 | | `Se0/0/0` | `172.16.20.1` | `255.255.255.0` | N/A | WAN link to 2501B (DCE) |
 | **Router 2501B**| `Se0/0/0` | `172.16.20.2` | `255.255.255.0` | N/A | WAN link from 2501A (DTE) |
-| | `Fa0/0` | `172.16.30.1` | `255.255.255.0` | N/A | LAN 172.16.30.0/24 |
+| | `Gig0/0` | `172.16.30.1` | `255.255.255.0` | N/A | LAN 172.16.30.0/24 |
 | | `Se0/0/1` | `172.16.40.1` | `255.255.255.0` | N/A | WAN link to 2501C (DCE) |
 | **Router 2501C**| `Se0/0/0` | `172.16.40.2` | `255.255.255.0` | N/A | WAN link from 2501B (DTE) |
-| | `Fa0/0` | `172.16.50.1` | `255.255.255.0` | N/A | LAN 172.16.50.0/24 |
+| | `Gig0/0` | `172.16.50.1` | `255.255.255.0` | N/A | LAN 172.16.50.0/24 |
 | **PC-1** | `FastEthernet0` | `172.16.10.10` | `255.255.255.0` | `172.16.10.1` | Client Host 1 |
 | **PC-2** | `FastEthernet0` | `172.16.30.10` | `255.255.255.0` | `172.16.30.1` | Client Host 2 |
 | **PC-3** | `FastEthernet0` | `172.16.50.10` | `255.255.255.0` | `172.16.50.1` | Client Host 3 |
@@ -79,7 +79,7 @@ $$\text{\texttt{ip route }} \langle\text{destination-network}\rangle \;\langle\t
 
 1. **Topology Assembly:**
    - Launch Cisco Packet Tracer and assemble 4 routers (2811 series), 1 switch (Catalyst 2960), and 3 PCs.
-   - Power off routers, insert `WIC-2T` serial modules into Slot 0, and power back on.
+   - Power off routers, insert `HHWIC-2T` serial modules into Slot 0, and power back on.
    - Interconnect routers using Serial DCE cables for WAN links and Straight-Through cables for LANs.
 2. **Interface Addressing:**
    - Assign IP addresses and subnet masks to all interfaces according to the Addressing Table.
@@ -105,7 +105,7 @@ $$\text{\texttt{ip route }} \langle\text{destination-network}\rangle \;\langle\t
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2621
-R_2621(config)# interface FastEthernet0/0
+R_2621(config)# interface GigabitEthernet0/0
 R_2621(config-if)# ip address 172.16.10.1 255.255.255.0
 R_2621(config-if)# no shutdown
 R_2621(config-if)# exit
@@ -122,7 +122,7 @@ R_2621# copy running-config startup-config
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2501A
-R_2501A(config)# interface FastEthernet0/0
+R_2501A(config)# interface GigabitEthernet0/0
 R_2501A(config-if)# ip address 172.16.10.2 255.255.255.0
 R_2501A(config-if)# no shutdown
 R_2501A(config-if)# exit
@@ -147,7 +147,7 @@ R_2501B(config)# interface Serial0/0/0
 R_2501B(config-if)# ip address 172.16.20.2 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
-R_2501B(config)# interface FastEthernet0/0
+R_2501B(config)# interface GigabitEthernet0/0
 R_2501B(config-if)# ip address 172.16.30.1 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
@@ -171,7 +171,7 @@ R_2501C(config)# interface Serial0/0/0
 R_2501C(config-if)# ip address 172.16.40.2 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
-R_2501C(config)# interface FastEthernet0/0
+R_2501C(config)# interface GigabitEthernet0/0
 R_2501C(config-if)# ip address 172.16.50.1 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
@@ -196,7 +196,7 @@ Gateway of last resort is not set
 
 S    172.16.10.0/24 [1/0] via 172.16.20.1
 C    172.16.20.0/24 is directly connected, Serial0/0/0
-C    172.16.30.0/24 is directly connected, FastEthernet0/0
+C    172.16.30.0/24 is directly connected, GigabitEthernet0/0
 C    172.16.40.0/24 is directly connected, Serial0/0/1
 S    172.16.50.0/24 [1/0] via 172.16.40.2
 ```

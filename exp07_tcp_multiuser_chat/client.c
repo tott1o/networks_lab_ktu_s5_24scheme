@@ -1,151 +1,57 @@
-/*
- * Experiment 7: Multi-User Chat Client Using TCP
- * Course: PCCSL507 - Networks Lab
- * File: client.c
- * Description: Multi-threaded TCP Chat Client that concurrently handles user input
- *              and incoming messages from other participants using POSIX threads.
- *              Displays commands: /help, /users, /msg, /exit.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <arpa/inet.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
 
-#define SERVER_IP "127.0.0.1"
-#define PORT 8082
-#define BUFFER_SIZE 2048
-#define NAME_LEN 32
+int s;
 
-static volatile sig_atomic_t flag = 0;
-static int sockfd = 0;
-static char name[NAME_LEN];
-
-void str_trim_lf(char *arr, int length) {
-    for (int i = 0; i < length; i++) {
-        if (arr[i] == '\n' || arr[i] == '\r') {
-            arr[i] = '\0';
-            break;
-        }
-    }
-}
-
-void catch_ctrl_c_and_exit(int sig) {
-    (void)sig;
-    flag = 1;
-}
-
-/* Worker thread to send messages to server */
-void *send_msg_handler(void *arg) {
-    (void)arg;
-    char buffer[BUFFER_SIZE];
-
-    while (!flag) {
-        if (fgets(buffer, BUFFER_SIZE, stdin) != NULL) {
-            str_trim_lf(buffer, BUFFER_SIZE);
-
-            if (strcmp(buffer, "/exit") == 0 || strcmp(buffer, "exit") == 0) {
-                send(sockfd, buffer, strlen(buffer), 0);
-                flag = 1;
-                break;
-            } else if (strlen(buffer) > 0) {
-                send(sockfd, buffer, strlen(buffer), 0);
-            }
-        }
-    }
-    catch_ctrl_c_and_exit(2);
-    return NULL;
-}
-
-/* Worker thread to receive messages from server */
-void *recv_msg_handler(void *arg) {
-    (void)arg;
-    char buffer[BUFFER_SIZE];
-
-    while (!flag) {
-        int receive = recv(sockfd, buffer, BUFFER_SIZE - 1, 0);
-        if (receive > 0) {
-            buffer[receive] = '\0';
-            printf("%s", buffer);
-            fflush(stdout);
-        } else if (receive == 0) {
-            printf("\n[INFO] Server closed the connection.\n");
-            flag = 1;
-            break;
-        }
-        memset(buffer, 0, sizeof(buffer));
+// Separate receiving thread for simultaneous messaging[cite: 4]
+void *recv_msg(void *arg) {
+    char buf[256];
+    while (recv(s, buf, sizeof(buf), 0) > 0) {
+        printf("\n%s\n> ", buf);
+        fflush(stdout);
     }
     return NULL;
 }
 
 int main() {
-    signal(SIGINT, catch_ctrl_c_and_exit);
+    struct sockaddr_in server;
+    char name[50], msg[200], buf[256];
 
-    printf("=====================================================\n");
-    printf("        TCP MULTI-USER CHAT CLIENT - EXPERIMENT 7    \n");
-    printf("=====================================================\n");
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    server.sin_family = AF_INET;
+    server.sin_port = htons(2005);
+    server.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    printf("Enter your username (max %d chars): ", NAME_LEN - 1);
-    if (fgets(name, NAME_LEN, stdin) == NULL) {
-        strcpy(name, "Anonymous");
-    }
-    str_trim_lf(name, strlen(name));
+    connect(s, (struct sockaddr *)&server, sizeof(server));
+    printf("Connected to chat.\n");
 
-    if (strlen(name) < 2) {
-        printf("[ERROR] Name must be at least 2 characters long.\n");
-        return 1;
-    }
+    printf("Enter username: ");
+    scanf("%s", name);
+    getchar(); // Clear newline
 
-    struct sockaddr_in server_addr;
-
-    // 1. Create Socket
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(PORT);
-    if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0) {
-        perror("[ERROR] Invalid server address");
-        return 1;
-    }
-
-    // 2. Connect to Server
-    printf("[INFO] Connecting to Chat Server at %s:%d...\n", SERVER_IP, PORT);
-    if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-        perror("[ERROR] Connection failed. Is the server running?");
-        return 1;
-    }
-
-    // Send username
-    send(sockfd, name, strlen(name), 0);
-
-    printf("\n=== Connected to Chat Room as \"%s\" ===\n", name);
-    printf("Commands: /help (show help) | /users (list users) | /msg <user> <text> | /exit (leave)\n");
-    printf("-----------------------------------------------------\n\n");
-
-    // Spawn Send and Receive Threads
-    pthread_t send_msg_thread;
-    if (pthread_create(&send_msg_thread, NULL, send_msg_handler, NULL) != 0) {
-        perror("[ERROR] pthread_create failed");
-        return 1;
-    }
-
-    pthread_t recv_msg_thread;
-    if (pthread_create(&recv_msg_thread, NULL, recv_msg_handler, NULL) != 0) {
-        perror("[ERROR] pthread_create failed");
-        return 1;
-    }
+    pthread_t t;
+    pthread_create(&t, NULL, recv_msg, NULL);
+    pthread_detach(t);
 
     while (1) {
-        if (flag) {
-            printf("\n[INFO] Exiting chat room. Goodbye!\n");
+        printf("> ");
+        fgets(msg, sizeof(msg), stdin);
+        msg[strcspn(msg, "\n")] = 0;
+
+        sprintf(buf, "%s: %s", name, msg);
+        send(s, buf, sizeof(buf), 0);
+
+        if (strcmp(msg, "exit") == 0) { // Graceful exit[cite: 4]
             break;
         }
-        usleep(100000);
     }
 
-    close(sockfd);
+    close(s);
     return 0;
 }

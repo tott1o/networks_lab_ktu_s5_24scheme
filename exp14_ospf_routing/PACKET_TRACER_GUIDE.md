@@ -16,14 +16,27 @@ According to the KTU PCCSL507 syllabus:
 
 ## 2. NETWORK TOPOLOGY (FIGURE 1 FROM SYLLABUS)
 
+> [!IMPORTANT]
+> ### Modern Packet Tracer Hardware Selection (PT 8.x / 7.x & CCNA Standards)
+> The legacy router models shown in the university syllabus diagram (`Cisco 2621` and `Cisco 2501`) are discontinued and **not available** in modern Cisco Packet Tracer versions.
+> Across engineering universities (KTU, VTU, Anna Univ) and CCNAv7 curricula, the following modern devices and interface mappings are standard:
+> 1. **Primary Modern Router**: Select **Cisco 1941 (ISR G2)** or **Cisco 2911** from the bottom router shelf.
+> 2. **Serial WAN Module**: Install the **`HWIC-2T`** (High-Speed WAN Interface Card) in **Slot 0** (Power OFF router in *Physical* tab -> drag `HWIC-2T` to Slot 0 -> Power ON).
+> 3. **Interface Names**:
+>    - **LAN Ethernet**: **`GigabitEthernet 0/0` (`g0/0`)** replaces legacy `FastEthernet 0/0`.
+>    - **Serial WAN**: **`Serial 0/0/0` (`s0/0/0`)** and **`Serial 0/0/1` (`s0/0/1`)**.
+> 4. **Alternative Generic Option**: You may also use the **Router-PT (Generic)** with `PT-ROUTER-NM-1FFE` and `PT-ROUTER-NM-1SS`.
+> *(If your college lab computers run legacy 2811 routers, simply use `FastEthernet 0/0` instead of `GigabitEthernet 0/0`).*
+
+
 ### Topology Diagram (ASCII)
 ```text
   [172.16.10.0/24]                [172.16.20.0/24]                 [172.16.40.0/24]              [172.16.50.0/24]
        Ethernet                      Serial WAN                       Serial WAN                      Ethernet
  [Router 2621] ============ [Router 2501A] ----------------- [Router 2501B] ----------------- [Router 2501C] === [PC-3]
-   Fa0/0: .1                 Fa0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Fa0/0: .1    .10
+   Gig0/0: .1                 Gig0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Gig0/0: .1    .10
        |                                                    |                                           
-     [PC-1]                                               Fa0/0: .1                                     
+     [PC-1]                                               Gig0/0: .1                                     
       .10                                                   |                                           
                                                           [PC-2] .10                                    
                                                      [172.16.30.0/24] LAN                               
@@ -35,13 +48,13 @@ According to the KTU PCCSL507 syllabus:
 graph LR
     subgraph OSPF_AREA_0 ["OSPF Area 0 (Backbone Area)"]
         subgraph LAN1 ["Subnet 172.16.10.0/24"]
-            PC1["PC-1\n172.16.10.10"] --- R2621["Router 2621\nRouter-ID: 1.1.1.1\nFa0/0: 172.16.10.1"]
+            PC1["PC-1\n172.16.10.10"] --- R2621["Router 2621\nRouter-ID: 1.1.1.1\nGig0/0: 172.16.10.1"]
         end
 
-        R2621 ===|OSPF Hello / LSU (224.0.0.5)| R2501A["Router 2501A\nRouter-ID: 2.2.2.2\nFa0/0: 172.16.10.2\nSe0/0/0: 172.16.20.1 (DCE)"]
+        R2621 ===|OSPF Hello / LSU (224.0.0.5)| R2501A["Router 2501A\nRouter-ID: 2.2.2.2\nGig0/0: 172.16.10.2\nSe0/0/0: 172.16.20.1 (DCE)"]
 
         subgraph WAN1 ["Subnet 172.16.20.0/24"]
-            R2501A ---|Serial Link (Cost 64)| R2501B["Router 2501B\nRouter-ID: 3.3.3.3\nSe0/0/0: 172.16.20.2\nFa0/0: 172.16.30.1\nSe0/0/1: 172.16.40.1 (DCE)"]
+            R2501A ---|Serial Link (Cost 64)| R2501B["Router 2501B\nRouter-ID: 3.3.3.3\nSe0/0/0: 172.16.20.2\nGig0/0: 172.16.30.1\nSe0/0/1: 172.16.40.1 (DCE)"]
         end
 
         subgraph LAN2 ["Subnet 172.16.30.0/24"]
@@ -49,7 +62,7 @@ graph LR
         end
 
         subgraph WAN2 ["Subnet 172.16.40.0/24"]
-            R2501B ---|Serial Link (Cost 64)| R2501C["Router 2501C\nRouter-ID: 4.4.4.4\nSe0/0/0: 172.16.40.2\nFa0/0: 172.16.50.1"]
+            R2501B ---|Serial Link (Cost 64)| R2501C["Router 2501C\nRouter-ID: 4.4.4.4\nSe0/0/0: 172.16.40.2\nGig0/0: 172.16.50.1"]
         end
 
         subgraph LAN3 ["Subnet 172.16.50.0/24"]
@@ -86,7 +99,7 @@ Router# configure terminal
 Router(config)# hostname R_2621
 
 ! 1. Interface IP Setup
-R_2621(config)# interface FastEthernet0/0
+R_2621(config)# interface GigabitEthernet0/0
 R_2621(config-if)# ip address 172.16.10.1 255.255.255.0
 R_2621(config-if)# no shutdown
 R_2621(config-if)# exit
@@ -106,7 +119,7 @@ Router# configure terminal
 Router(config)# hostname R_2501A
 
 ! 1. Interface IP Setup
-R_2501A(config)# interface FastEthernet0/0
+R_2501A(config)# interface GigabitEthernet0/0
 R_2501A(config-if)# ip address 172.16.10.2 255.255.255.0
 R_2501A(config-if)# no shutdown
 R_2501A(config-if)# exit
@@ -138,7 +151,7 @@ R_2501B(config-if)# ip address 172.16.20.2 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
 
-R_2501B(config)# interface FastEthernet0/0
+R_2501B(config)# interface GigabitEthernet0/0
 R_2501B(config-if)# ip address 172.16.30.1 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
@@ -155,7 +168,7 @@ R_2501B(config-router)# router-id 3.3.3.3
 R_2501B(config-router)# network 172.16.20.0 0.0.0.255 area 0
 R_2501B(config-router)# network 172.16.30.0 0.0.0.255 area 0
 R_2501B(config-router)# network 172.16.40.0 0.0.0.255 area 0
-R_2501B(config-router)# passive-interface FastEthernet0/0
+R_2501B(config-router)# passive-interface GigabitEthernet0/0
 R_2501B(config-router)# end
 R_2501B# copy running-config startup-config
 ```
@@ -172,7 +185,7 @@ R_2501C(config-if)# ip address 172.16.40.2 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
 
-R_2501C(config)# interface FastEthernet0/0
+R_2501C(config)# interface GigabitEthernet0/0
 R_2501C(config-if)# ip address 172.16.50.1 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
@@ -182,7 +195,7 @@ R_2501C(config)# router ospf 1
 R_2501C(config-router)# router-id 4.4.4.4
 R_2501C(config-router)# network 172.16.40.0 0.0.0.255 area 0
 R_2501C(config-router)# network 172.16.50.0 0.0.0.255 area 0
-R_2501C(config-router)# passive-interface FastEthernet0/0
+R_2501C(config-router)# passive-interface GigabitEthernet0/0
 R_2501C(config-router)# end
 R_2501C# copy running-config startup-config
 ```

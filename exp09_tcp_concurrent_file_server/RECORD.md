@@ -61,47 +61,23 @@ To prevent zombies:
 sequenceDiagram
     autonumber
     actor User
-    participant Client as TCP File Client Shell
-    participant Parent as Parent Server (PID 1000)
-    participant Child as Child Server (PID 1001)
+    participant Client as TCP File Client
+    participant Parent as Parent Server (PID 31200)
+    participant Child as Child Worker (PID 31205)
 
-    Note over Parent: socket() -> bind() -> listen()<br/>sigaction(SIGCHLD)
-    Parent->>Parent: accept() [blocking]
-    
-    User->>Client: Launch ./client (Interactive Mode)
-    Note over Client: socket() -> connect()
-    Client->>Parent: TCP Handshake
-    Parent->>Child: fork() spawns Child Process (PID 1001)
-    Parent->>Parent: close(connfd) & resume accept()
-    
-    Note over Child: close(listenfd)<br/>my_pid = getpid()
-    Child->>Client: Send Welcome Banner with Child PID 1001
-    
-    User->>Client: Type "LIST"
-    Client->>Child: Send "LIST\n"
-    Child->>Client: Return directory listing with file sizes
-    
-    User->>Client: Type "GET sample.txt"
-    Client->>Child: Send "GET sample.txt\n"
-    alt File Exists
-        Child->>Client: Send "[SERVER PID: 1001] SUCCESS: File found (787 bytes)..."
-        Child->>Client: Stream file payload chunks
-        Child->>Client: Send "[SERVER] End of file reached."
-    else File Not Found
-        Child->>Client: Send "[SERVER PID: 1001] ERROR: File not found"
-    end
-
-    User->>Client: Type "DOWNLOAD sample.txt"
-    Client->>Child: Send "GET sample.txt\n"
-    Child->>Client: Stream file data
-    Note over Client: Save payload to downloaded_sample.txt
-
-    User->>Client: Type "EXIT"
-    Client->>Child: Send "EXIT\n"
-    Child->>Client: Send "[SERVER PID: 1001] Goodbye!"
-    Child->>Client: close(connfd)
-    Child->>Parent: exit(0) triggers SIGCHLD
-    Note over Parent: sigchld_handler() reaps zombie with waitpid()
+    Note over Parent: socket() -> bind(8084) -> listen()
+    User->>Client: Run ./client
+    Client->>Parent: connect()
+    Parent->>Child: fork() spawns child worker
+    Parent->>Parent: close(client_fd) & resume accept()
+    Note over Child: close(server_fd)
+    User->>Client: Input "sample.txt"
+    Client->>Child: send("sample.txt")
+    Child->>Child: fopen("sample.txt", "r") & read
+    Child->>Client: send("[Server PID 31205] File 'sample.txt' Contents:\n...")
+    Child->>Client: Stream file lines
+    Child->>Child: fclose() & exit(0)
+    Client->>User: Display file contents with Server PID
 ```
 
 ---
@@ -110,49 +86,32 @@ sequenceDiagram
 
 ### 4.1 Parent Server Algorithm
 1. **Start**.
-2. Install `sigchld_handler` using `sigaction` with `SA_RESTART` and `SA_NOCLDSTOP`.
-3. Create TCP stream socket using `socket(AF_INET, SOCK_STREAM, 0)`.
-4. Configure server address with `AF_INET`, `INADDR_ANY`, and `PORT 8084`.
-5. Bind socket using `bind()` and enter listening state with `listen()`.
-6. Print Parent Server PID using `getpid()`.
-7. Loop indefinitely:
-   - Call `accept()` to obtain `connfd`.
+2. Create a TCP stream socket using `socket(AF_INET, SOCK_STREAM, 0)`.
+3. Set socket options (`SO_REUSEADDR`), configure address with `AF_INET`, `INADDR_ANY`, and `PORT 8084`.
+4. Bind socket using `bind()` and enter listening state with `listen()`.
+5. Print Parent Server PID using `getpid()`.
+6. Loop indefinitely:
+   - Call `accept()` to accept incoming connection.
    - Call `fork()`:
-     - **If `fork() < 0`:** Log error.
-     - **If `fork() == 0` (Child):** Close `server_fd`, execute interactive client handler, and exit.
-     - **If `fork() > 0` (Parent):** Close `client_fd` and return to `accept()`.
-8. Stop.
+     - **If `fork() == 0` (Child Worker Process):**
+       - Close listening socket `server_fd`.
+       - Receive requested filename from client via `recv()`.
+       - Attempt to open file using `fopen(filename, "r")`.
+       - If file is not found: send error message containing child PID (`getpid()`) to client.
+       - If file is found: send header with child PID, stream file lines using `fgets()` and `send()`, and close file.
+       - Close `client_fd` and call `exit(0)`.
+     - **If `fork() > 0` (Parent Process):**
+       - Close connected client socket `client_fd` and return to `accept()`.
+7. Stop.
 
-### 4.2 Child Worker Algorithm
-1. Obtain child process ID using `getpid()`.
-2. Transmit welcome banner with child PID.
-3. Enter interactive command loop:
-   - Read command line from `connfd` using `recv()`.
-   - If client disconnects or sends `EXIT` / `QUIT`: send goodbye and break loop.
-   - If command is `LIST` / `DIR`: read directory using `opendir()`, stream file names and sizes, and send delimiter.
-   - If command is `INFO <file>`: inspect file using `stat()`, format size/permissions/timestamp with child PID, and return.
-   - If command is `GET <file>` or direct filename:
-     - Try opening `fopen(file, "rb")`.
-     - If exists: send header with child PID and size, stream file blocks, and send EOF delimiter.
-     - If not: send error message with child PID.
-4. Close `connfd`.
-5. Call `exit(0)` to terminate child process.
-
-### 4.3 Client Algorithm
+### 4.2 Client Algorithm
 1. **Start**.
-2. Create TCP stream socket and connect to `127.0.0.1:8084`.
-3. Read server welcome banner and child PID.
-4. **If arguments supplied on command line (`./client <filename>`):**
-   - Transmit `GET <filename>`, receive and display contents, close socket, and exit (Batch Mode).
-5. **If no arguments supplied (Interactive Mode):**
-   - Display menu: `LIST`, `GET`, `DOWNLOAD`, `INFO`, `HELP`, `EXIT`.
-   - Loop prompt `file-client> `:
-     - If `LIST`: send `LIST`, receive and display server file catalog.
-     - If `INFO <file>`: send `INFO <file>`, display file metadata.
-     - If `GET <file>`: send `GET <file>`, print contents on terminal with server PID.
-     - If `DOWNLOAD <file>`: send `GET <file>`, extract content, and save to `downloaded_<file>`.
-     - If `EXIT`: send `EXIT`, close connection, and exit.
-6. Stop.
+2. Create TCP stream socket using `socket(AF_INET, SOCK_STREAM, 0)`.
+3. Connect to server (`127.0.0.1:8084`) using `connect()`.
+4. Prompt user to enter filename and read using `scanf()`.
+5. Transmit filename to server using `send()`.
+6. Receive streamed file data or error response in a loop using `recv()` and print to standard output.
+7. Close socket and exit.
 
 ---
 
@@ -160,8 +119,8 @@ sequenceDiagram
 
 ```bash
 cd exp09_tcp_concurrent_file_server
-gcc -Wall -Wextra -O2 server.c -o server
-gcc -Wall -Wextra -O2 client.c -o client
+gcc server.c -o server
+gcc client.c -o client
 ```
 
 **Terminal 1 (Server):**
@@ -169,53 +128,34 @@ gcc -Wall -Wextra -O2 client.c -o client
 ./server
 ```
 
-**Terminal 2 (Client 1 - Interactive Shell):**
+**Terminal 2 (Client 1 - Request Existing File):**
 ```bash
 ./client
-file-client> LIST
-file-client> INFO sample.txt
-file-client> GET sample.txt
-file-client> DOWNLOAD sample.txt
-file-client> EXIT
 ```
 
-**Terminal 3 (Client 2 - Batch Mode):**
+**Terminal 3 (Client 2 - Request Non-Existent File):**
 ```bash
-./client sample.txt
+./client
 ```
 
 ---
 
 ## 6. SAMPLE RUN OUTPUT
 
-### Client 1 Console (Interactive CLI Shell):
+### Server Console:
 ```text
-=====================================================
-        CONCURRENT TCP FILE CLIENT - EXPERIMENT 9    
-=====================================================
-[SERVER PID: 31205] Connected to Concurrent File Server. Type HELP for commands.
-Type 'HELP' for available commands or 'EXIT' to quit.
+Concurrent File Server (PID: 31200) listening on port 8084...
+[Worker PID: 31205] Requested file: 'sample.txt'
+[Worker PID: 31210] Requested file: 'missing.txt'
+```
 
-file-client> LIST
-[SERVER PID: 31205] Files hosted on server:
--------------------------------------------------------------
-   1. client.c                 (6446 bytes)
-   2. RECORD.md                (11868 bytes)
-   3. sample.txt               (787 bytes)
-   4. server.c                 (11957 bytes)
--------------------------------------------------------------
-[SERVER] End of command output.
+### Client 1 Console (Existing File):
+```text
+Enter filename to request: sample.txt
 
-file-client> INFO sample.txt
-[SERVER PID: 31205] File Metadata for 'sample.txt':
-  Size:          787 bytes
-  Last Modified: 2026-10-01 09:17:38
-  Permissions:   0777
-[SERVER] End of command output.
-
-file-client> GET sample.txt
-[SERVER PID: 31205] SUCCESS: File 'sample.txt' found (787 bytes). Transmitting contents below:
--------------------------------------------------------------
+--- Server Response ---
+[Server PID 31205] File 'sample.txt' Contents:
+----------------------------------------
 =============================================================
              KTU PCCSL507 NETWORKS LAB EXPERIMENT 9
                  CONCURRENT FILE SERVER TEST FILE
@@ -226,65 +166,40 @@ When requested by a client, the server:
 2. Obtains its unique Child Process ID (PID) via getpid().
 3. Sends its PID to the client.
 4. Streams the contents of this file over the TCP socket.
+
+Experiment Objectives Met:
+- Concurrent client handling via multi-processing (fork)
+- Stream-based TCP socket communication
+- File I/O and graceful error handling
+- Transmission of Server Process ID (PID)
 =============================================================
-
--------------------------------------------------------------
-[SERVER] End of file reached.
-
-file-client> DOWNLOAD sample.txt
-[SUCCESS] File saved locally as 'downloaded_sample.txt' (787 bytes).
-
-file-client> EXIT
-[SERVER PID: 31205] Goodbye! Closing session.
-[INFO] Session closed. Exiting.
 ```
 
 ### Client 2 Console (File Not Found):
 ```text
-file-client> GET missing_file.txt
-[SERVER PID: 31210] ERROR: File 'missing_file.txt' not found on server.
-[SERVER] End of file reached.
-```
+Enter filename to request: missing.txt
 
-### Server Console:
-```text
-=====================================================
-   CONCURRENT TCP FILE SERVER (Port: 8084)             
-=====================================================
-[INFO] Parent Server listening with PID: 31200
-
-[PARENT PID 31200] Forked child process with PID 31205 to handle client.
-[CHILD PID 31205] Handling connection from 127.0.0.1:54112
-[CHILD PID 31205] Request from 127.0.0.1:54112: "LIST"
-[CHILD PID 31205] Request from 127.0.0.1:54112: "INFO sample.txt"
-[CHILD PID 31205] Request from 127.0.0.1:54112: "GET sample.txt"
-[CHILD PID 31205] File 'sample.txt' transmitted successfully.
-[CHILD PID 31205] Request from 127.0.0.1:54112: "EXIT"
-[CHILD PID 31205] Finished servicing client 127.0.0.1:54112. Exiting child process.
-
-[PARENT PID 31200] Forked child process with PID 31210 to handle client.
-[CHILD PID 31210] Handling connection from 127.0.0.1:54118
-[CHILD PID 31210] Request from 127.0.0.1:54118: "GET missing_file.txt"
-[CHILD PID 31210] File 'missing_file.txt' not found. Sent error response.
+--- Server Response ---
+[Server PID 31210] Error: File 'missing.txt' not found!
 ```
 
 ---
 
 ## 7. VIVA VOCE QUESTIONS & ANSWERS
 
-1. **Why does the parent process close `connfd` while the child process closes `listenfd`?**  
-   *Answer:* `fork()` creates an exact duplicate of the parent's file descriptor table, incrementing reference counts in the kernel file table. The parent does not handle client communication, so it closes `connfd` to prevent descriptor leaks and allow connection termination when the child closes its descriptor. The child does not listen for incoming connections, so it closes `listenfd` to release the listening socket resource.
+1. **Why does the parent process close `client_fd` while the child process closes `server_fd`?**  
+   *Answer:* `fork()` creates an exact duplicate of the parent's file descriptor table. The parent does not handle client communication, so it closes `client_fd` to prevent descriptor leaks and allow connection termination when the child closes its descriptor. The child does not listen for incoming connections, so it closes `server_fd` to release the listening socket resource.
 
-2. **What is a Zombie process, and how does the server prevent it?**  
-   *Answer:* A zombie process is a child that has terminated (`exit()`) whose entry remains in the process table so its parent can read its exit status. If the parent does not call `wait()`/`waitpid()`, zombies accumulate. The server prevents zombies by registering a `SIGCHLD` handler that calls `waitpid(-1, NULL, WNOHANG)` in a loop to reap dead children asynchronously.
+2. **What is the return value of `fork()` in parent and child?**  
+   *Answer:* `fork()` returns 0 to the child process, returns the Process ID (PID) of the spawned child to the parent process, and returns -1 on error.
 
-3. **What is the purpose of the `WNOHANG` flag in `waitpid()`?**  
-   *Answer:* It instructs `waitpid()` not to block if no child process has exited. This ensures that the `SIGCHLD` handler finishes immediately without freezing the parent process.
-
-4. **Why is transmitting the server PID significant in this experiment?**  
+3. **Why is transmitting the server PID significant in this experiment?**  
    *Answer:* It provides direct empirical proof that multiple clients connecting concurrently are handled by distinct, isolated operating system processes spawned by `fork()`, verifying concurrent execution.
+
+4. **What happens if a child process terminates before the parent reaps it?**  
+   *Answer:* It becomes a zombie (defunct) process. The OS retains its exit status in the process table until the parent calls `wait()` or terminates (at which point init/systemd adopts and reaps it).
 
 ---
 
 ## 8. RESULT
-A concurrent TCP file server using process forking (`fork()`) and an interactive client shell were successfully implemented in C on Linux. The server serviced concurrent client requests, returned directory listings, metadata, and file contents alongside worker Process IDs, and gracefully prevented zombie processes using `SIGCHLD` and `waitpid()`.
+A concurrent TCP file server using multiprocess forking (`fork()`) was successfully implemented and evaluated. The server handled client requests concurrently by delegating each connection to a child process, transmitting the child's Process ID (PID) alongside the requested file contents or error message.

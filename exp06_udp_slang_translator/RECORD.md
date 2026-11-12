@@ -68,28 +68,13 @@ sequenceDiagram
     participant Server as UDP Slang Server
 
     Note over Server: socket(SOCK_DGRAM) -> bind(PORT 8081)
-    Server->>Server: recvfrom() [listening]
+    Server->>Server: recvfrom() [waiting for datagram]
     
-    User->>Client: Launch ./client
-    Client->>User: Display Command Help (dict, sample, exit)
-    
-    User->>Client: Type "dict"
-    Client->>Server: sendto("DICT")
-    Server->>Client: Return Abbreviation Dictionary Table
-    Client->>User: Display Dictionary
-    
-    User->>Client: Type "sample"
-    Client->>Server: sendto("SAMPLE")
-    Server->>Client: Return Original & Translated Syllabus Text
-    Client->>User: Display Formal Translation
-    
-    User->>Client: Type "idk tbh"
-    Client->>Server: sendto("idk tbh")
-    Server->>Client: sendto("I don't know to be honest")
-    Client->>User: Display "I don't know to be honest"
-
-    User->>Client: Type "exit"
-    Client->>User: Close session and exit
+    User->>Client: Run ./client and input sentence
+    Client->>Server: sendto(sentence)
+    Server->>Server: translate() token-by-token
+    Server->>Client: sendto(translated_sentence)
+    Client->>User: Display formal translated sentence
 ```
 
 ---
@@ -99,35 +84,26 @@ sequenceDiagram
 ### 4.1 Server Algorithm
 1. **Start**.
 2. Create a UDP socket using `socket(AF_INET, SOCK_DGRAM, 0)`.
-3. Set up the `sockaddr_in` structure with `AF_INET`, `INADDR_ANY`, and `htons(PORT)`.
-4. Bind the socket using `bind()`.
-5. Enter an infinite listening loop:
-   - Call `recvfrom()` to wait for incoming UDP datagrams.
-   - Extract client's IP and port from `client_addr`.
-   - **If command is `DICT` / `LIST`:** Assemble formatted table of supported abbreviations and transmit back via `sendto()`.
-   - **If command is `SAMPLE`:** Translate official KTU syllabus sentence and return both original and translated text.
-   - **If custom text:**
-     - Scan input string character-by-character.
-     - Copy punctuation and whitespace directly.
-     - Extract word tokens, perform case-insensitive lookup in `SLANG_DICT`.
-     - Replace matching acronyms with expanded phrases; leave unmatched words unchanged.
-     - Transmit translated formal sentence back to client via `sendto()`.
-6. Stop.
+3. Set up `sockaddr_in` structure with `AF_INET`, `INADDR_ANY`, and `htons(PORT)`.
+4. Bind socket to port using `bind()`.
+5. Call `recvfrom()` to receive the sentence string from client.
+6. Call `translate()`:
+   - Traverse the input string character-by-character.
+   - Retain punctuation and spaces.
+   - Extract alphabetical word tokens, compare against slang dictionary (`tbh`, `idc`, `irl`, `atm`, `tbf`, etc.).
+   - Replace matching tokens with expanded formal text; keep unmatched words unchanged.
+7. Send translated string back to client using `sendto()`.
+8. Close socket and exit.
 
 ### 4.2 Client Algorithm
 1. **Start**.
 2. Create a UDP socket using `socket(AF_INET, SOCK_DGRAM, 0)`.
-3. Set receive timeout (`SO_RCVTIMEO`) to 3 seconds.
-4. Configure destination server address structure (`127.0.0.1:8081`).
-5. **If command-line argument passed (`./client "<sentence>"`):**
-   - Transmit sentence, receive and print translation, and exit (Batch Mode).
-6. **If no arguments passed (Interactive REPL Mode):**
-   - Display menu: `<sentence>`, `sample`, `dict`, `help`, `exit`.
-   - Loop prompt `slang-client> `:
-     - If `exit`: exit loop.
-     - If `help`: display commands.
-     - Otherwise: transmit line to server via `sendto()`, receive and print translated response.
-7. Close socket and stop.
+3. Set up destination server address structure (`127.0.0.1:8081`).
+4. Read English sentence with slang from standard input using `fgets()`.
+5. Transmit sentence to server using `sendto()`.
+6. Receive translated sentence from server using `recvfrom()`.
+7. Display translated formal sentence on console.
+8. Close socket and exit.
 
 ---
 
@@ -135,8 +111,8 @@ sequenceDiagram
 
 ```bash
 cd exp06_udp_slang_translator
-gcc -Wall -Wextra -O2 server.c -o server
-gcc -Wall -Wextra -O2 client.c -o client
+gcc server.c -o server
+gcc client.c -o client
 ```
 
 **Terminal 1 (Server):**
@@ -144,78 +120,28 @@ gcc -Wall -Wextra -O2 client.c -o client
 ./server
 ```
 
-**Terminal 2 (Client - Interactive Console):**
+**Terminal 2 (Client):**
 ```bash
 ./client
-slang-client> dict
-slang-client> sample
-slang-client> idk tbh
-slang-client> exit
-```
-
-**Terminal 3 (Client - Batch Mode):**
-```bash
-./client "Really idc about this irl"
 ```
 
 ---
 
 ## 6. SAMPLE INPUT AND OUTPUT
 
-### Client Console (Interactive REPL Shell):
+### Client Terminal:
 ```text
-=====================================================
-     UDP NEW-GEN SLANG TRANSLATOR - EXPERIMENT 6     
-=====================================================
-Connected to Slang Translation Server at 127.0.0.1:8081
+Enter new-gen English sentence: Really idc about this irl but atm I will study, tbf.
 
-Available Commands:
-  <any sentence>  - Translate informal abbreviations into formal English
-  sample          - Run official KTU syllabus test sentence
-  dict / list     - View dictionary of supported slang acronyms
-  help            - Display this help message
-  exit / quit     - Exit translator client
-
-slang-client> dict
-Supported Slang Abbreviations Dictionary (12 entries):
--------------------------------------------------------------
-  tbh      -> to be honest
-  ig       -> I guess
-  tbf      -> to be fair
-  atm      -> at the moment
-  irl      -> in real life
-  lol      -> laughing out loud
-  asap     -> as soon as possible
-  omg      -> oh my god
-  ttyl     -> talk to you later
-  idk      -> I don't know
-  nvm      -> never mind
-  idc      -> I don't care
--------------------------------------------------------------
-
-slang-client> sample
-[ORIGINAL]  : Really idc about this stupid server as it is of no use irl but atm, I will design one, tbf to the professor.
-[TRANSLATED]: Really I don't care about this stupid server as it is of no use in real life but at the moment, I will design one, to be fair to the professor.
-
-slang-client> idk tbh
-I don't know to be honest
-
-slang-client> exit
-[INFO] Exiting Slang Translator Client. Goodbye!
+Translated Formal Sentence:
+Really I don't care about this in real life but at the moment I will study, to be fair.
 ```
 
-### Server Console:
+### Server Terminal:
 ```text
-=====================================================
-   UDP NEW-GEN SLANG TRANSLATOR SERVER (Port: 8081)    
-=====================================================
-[INFO] Server is listening for incoming UDP datagrams...
-
-[DATAGRAM RECEIVED] From 127.0.0.1:49215: "dict"
-[DATAGRAM RECEIVED] From 127.0.0.1:49215: "sample"
-[DATAGRAM RECEIVED] From 127.0.0.1:49215: "idk tbh"
-[TRANSLATION]: "I don't know to be honest"
-[INFO] Translated datagram sent back to 127.0.0.1:49215
+UDP Slang Server listening on port 8081...
+Received: Really idc about this irl but atm I will study, tbf.
+Translated: Really I don't care about this in real life but at the moment I will study, to be fair.
 ```
 
 ---

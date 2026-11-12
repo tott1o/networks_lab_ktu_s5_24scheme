@@ -18,6 +18,19 @@ According to the KTU PCCSL507 syllabus:
 
 ## 2. CAMPUS TOPOLOGY (FIGURE 2 FROM SYLLABUS)
 
+> [!IMPORTANT]
+> ### Modern Packet Tracer Hardware Selection (PT 8.x / 7.x & CCNA Standards)
+> The legacy router models shown in the university syllabus diagram (`Cisco 2621` and `Cisco 2501`) are discontinued and **not available** in modern Cisco Packet Tracer versions.
+> Across engineering universities (KTU, VTU, Anna Univ) and CCNAv7 curricula, the following modern devices and interface mappings are standard:
+> 1. **Primary Modern Router**: Select **Cisco 1941 (ISR G2)** or **Cisco 2911** from the bottom router shelf.
+> 2. **Serial WAN Module**: Install the **`HWIC-2T`** (High-Speed WAN Interface Card) in **Slot 0** (Power OFF router in *Physical* tab -> drag `HWIC-2T` to Slot 0 -> Power ON).
+> 3. **Interface Names**:
+>    - **LAN Ethernet**: **`GigabitEthernet 0/0` (`g0/0`)** replaces legacy `FastEthernet 0/0`.
+>    - **Serial WAN**: **`Serial 0/0/0` (`s0/0/0`)** and **`Serial 0/0/1` (`s0/0/1`)**.
+> 4. **Alternative Generic Option**: You may also use the **Router-PT (Generic)** with `PT-ROUTER-NM-1FFE` and `PT-ROUTER-NM-1SS`.
+> *(If your college lab computers run legacy 2811 routers, simply use `FastEthernet 0/0` instead of `GigabitEthernet 0/0`).*
+
+
 ### Topology Diagram (ASCII)
 ```text
   [Host_A Subnet: 172.16.10.0/24]      [Host_B Subnet: 172.16.30.0/24]         [Labs Subnet: 172.16.50.0/24]
@@ -26,11 +39,11 @@ According to the KTU PCCSL507 syllabus:
                  |                                   |                                  \          /
              [Switch 1]                          [Switch 2]                               [Switch 3]
                  |                                   |                                        |
-              Fa0/0: .1                           Fa0/0: .1                                Fa0/0: .1
+              Gig0/0: .1                           Gig0/0: .1                                Gig0/0: .1
            [Router-A (R1)] ================== [Router-B (R2)] ======================= [Router-C (R3)]
             Se0/0/0: .1     Serial 172.16.20.0/24 Se0/0/0: .2  Se0/0/1: .1  Serial 172.16.40.0/24  Se0/0/0: .2
           [APPLY ACL 10 HERE]
-          (Outbound on Fa0/0)
+          (Outbound on Gig0/0)
 ```
 
 ### Mermaid Topology Diagram
@@ -38,18 +51,18 @@ According to the KTU PCCSL507 syllabus:
 graph TD
     subgraph CAMPUS_NET1 ["Admin Subnet (172.16.10.0/24)"]
         HA["Host_A\n172.16.10.10/24"] --- SW1["Switch 1\nCatalyst 2960"]
-        SW1 --- R1["Router-A\nFa0/0: 172.16.10.1\n*** ACL 10 APPLIED OUTBOUND ***"]
+        SW1 --- R1["Router-A\nGig0/0: 172.16.10.1\n*** ACL 10 APPLIED OUTBOUND ***"]
     end
 
     subgraph CAMPUS_NET2 ["Staff / Host_B Subnet (172.16.30.0/24)"]
         HB["Host_B\n172.16.30.2/24"] --- SW2["Switch 2\nCatalyst 2960"]
-        SW2 --- R2["Router-B\nFa0/0: 172.16.30.1"]
+        SW2 --- R2["Router-B\nGig0/0: 172.16.30.1"]
     end
 
     subgraph CAMPUS_NET3 ["Student Labs Subnet (172.16.50.0/24)"]
         LB["Lab_B\n172.16.50.10/24"] --- SW3["Switch 3\nCatalyst 2960"]
         LC["Lab_C\n172.16.50.20/24"] --- SW3
-        SW3 --- R3["Router-C\nFa0/0: 172.16.50.1"]
+        SW3 --- R3["Router-C\nGig0/0: 172.16.50.1"]
     end
 
     R1 ===|Serial WAN 172.16.20.0/24| R2
@@ -66,13 +79,13 @@ graph TD
 | **Host_B** | `Fa0` | `172.16.30.2` | `255.255.255.0` | `172.16.30.1` | Authorized Source Host |
 | **Lab_B** | `Fa0` | `172.16.50.10` | `255.255.255.0` | `172.16.50.1` | Unauthorized Student PC 1 |
 | **Lab_C** | `Fa0` | `172.16.50.20` | `255.255.255.0` | `172.16.50.1` | Unauthorized Student PC 2 |
-| **Router-A** | `Fa0/0` | `172.16.10.1` | `255.255.255.0` | N/A | Gateway to Host_A (ACL Outbound) |
+| **Router-A** | `Gig0/0` | `172.16.10.1` | `255.255.255.0` | N/A | Gateway to Host_A (ACL Outbound) |
 | | `Se0/0/0` | `172.16.20.1` | `255.255.255.0` | N/A | Serial DCE to Router-B (Clock 64000) |
 | **Router-B** | `Se0/0/0` | `172.16.20.2` | `255.255.255.0` | N/A | Serial DTE from Router-A |
-| | `Fa0/0` | `172.16.30.1` | `255.255.255.0` | N/A | Gateway to Host_B |
+| | `Gig0/0` | `172.16.30.1` | `255.255.255.0` | N/A | Gateway to Host_B |
 | | `Se0/0/1` | `172.16.40.1` | `255.255.255.0` | N/A | Serial DCE to Router-C (Clock 64000) |
 | **Router-C** | `Se0/0/0` | `172.16.40.2` | `255.255.255.0` | N/A | Serial DTE from Router-B |
-| | `Fa0/0` | `172.16.50.1` | `255.255.255.0` | N/A | Gateway to Lab_B and Lab_C |
+| | `Gig0/0` | `172.16.50.1` | `255.255.255.0` | N/A | Gateway to Lab_B and Lab_C |
 
 ---
 
@@ -86,7 +99,7 @@ graph TD
 > [!CRITICAL]
 > **Standard ACLs must ALWAYS be placed as close to the destination as possible!**  
 > If you place Standard ACL 10 on Router-B or Router-C, it would block Lab_B and Lab_C from sending packets to *all* destinations reachable through that router (including other servers or the internet).  
-> Placing ACL 10 outbound on Router-A's `FastEthernet0/0` ensures that Lab_B and Lab_C are only blocked when attempting to reach **`172.16.10.0`** (Host_A), while preserving their ability to communicate with Host_B and other campus resources!
+> Placing ACL 10 outbound on Router-A's `GigabitEthernet0/0` ensures that Lab_B and Lab_C are only blocked when attempting to reach **`172.16.10.0`** (Host_A), while preserving their ability to communicate with Host_B and other campus resources!
 
 ---
 
@@ -100,7 +113,7 @@ Ensure underlying IP reachability is established first so traffic can route acro
 Router> enable
 Router# configure terminal
 Router(config)# hostname Router-A
-Router-A(config)# interface FastEthernet0/0
+Router-A(config)# interface GigabitEthernet0/0
 Router-A(config-if)# ip address 172.16.10.1 255.255.255.0
 Router-A(config-if)# no shutdown
 Router-A(config-if)# exit
@@ -126,7 +139,7 @@ Router-B(config)# interface Serial0/0/0
 Router-B(config-if)# ip address 172.16.20.2 255.255.255.0
 Router-B(config-if)# no shutdown
 Router-B(config-if)# exit
-Router-B(config)# interface FastEthernet0/0
+Router-B(config)# interface GigabitEthernet0/0
 Router-B(config-if)# ip address 172.16.30.1 255.255.255.0
 Router-B(config-if)# no shutdown
 Router-B(config-if)# exit
@@ -153,7 +166,7 @@ Router-C(config)# interface Serial0/0/0
 Router-C(config-if)# ip address 172.16.40.2 255.255.255.0
 Router-C(config-if)# no shutdown
 Router-C(config-if)# exit
-Router-C(config)# interface FastEthernet0/0
+Router-C(config)# interface GigabitEthernet0/0
 Router-C(config-if)# ip address 172.16.50.1 255.255.255.0
 Router-C(config-if)# no shutdown
 Router-C(config-if)# exit
@@ -180,8 +193,8 @@ Router-A(config)# access-list 10 permit host 172.16.30.2
 ! (Optional explicit deny statement for logging/clarity; implicit deny exists by default)
 Router-A(config)# access-list 10 deny any
 
-! Apply the ACL OUTBOUND on FastEthernet0/0 (towards 172.16.10.0)
-Router-A(config)# interface FastEthernet0/0
+! Apply the ACL OUTBOUND on GigabitEthernet0/0 (towards 172.16.10.0)
+Router-A(config)# interface GigabitEthernet0/0
 Router-A(config-if)# ip access-group 10 out
 Router-A(config-if)# end
 Router-A# copy running-config startup-config

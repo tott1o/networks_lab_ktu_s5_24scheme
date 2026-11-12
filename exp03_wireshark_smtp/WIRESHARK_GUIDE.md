@@ -22,7 +22,7 @@ According to the syllabus (PCCSL507):
 ## 2. TWO WAYS TO COMPLETE THIS LAB
 
 ### 🟢 OPTION A (Instant Offline Verification — 100% Guaranteed):
-This folder contains a complete, authentic pre-recorded packet trace: [`smtp_traffic.pcap`](file:///C:/Users/akhil/Desktop/networklab/exp03_wireshark_smtp/smtp_traffic.pcap).
+This folder contains a complete, authentic pre-recorded packet trace: [`smtp_traffic.pcap`](exp03_wireshark_smtp/smtp_traffic.pcap).
 1. Open **Wireshark**.
 2. Click **File $\rightarrow$ Open** (or press `Ctrl + O`).
 3. Select `exp03_wireshark_smtp/smtp_traffic.pcap`.
@@ -39,7 +39,7 @@ This folder contains a complete, authentic pre-recorded packet trace: [`smtp_tra
 5. No live mail server or external network connection is required!
 
 ### 🔵 OPTION B (Live Packet Capture via Local SMTP Simulator):
-Follow the procedure below using the bundled Python script [`smtp_simulator.py`](file:///C:/Users/akhil/Desktop/networklab/exp03_wireshark_smtp/smtp_simulator.py).
+Follow the procedure below using the bundled Python script [`smtp_simulator.py`](exp03_wireshark_smtp/smtp_simulator.py).
 
 ---
 

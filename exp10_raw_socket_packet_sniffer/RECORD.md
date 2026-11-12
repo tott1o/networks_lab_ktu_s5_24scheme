@@ -96,26 +96,21 @@ flowchart LR
 ## 4. ALGORITHM
 
 1. **Start**.
-2. Register signal handler `handle_sigint` for `SIGINT` (Ctrl+C).
-3. Check and prompt user for capture settings:
-   - Maximum number of packets to capture (default 10).
-   - Protocol filter: 0 = All Protocols, 1 = TCP only, 2 = UDP only, 3 = ICMP only.
-4. Create a raw link-layer packet socket:
+2. Create a raw link-layer packet socket:
    ```c
-   sock_raw = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+   sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
    ```
-5. Enter capture loop until `total_packets >= max_packets` or interrupted:
-   - Call `recvfrom()` to read raw Ethernet frame into `buffer`.
-   - **Ethernet Decapsulation:** Parse MAC addresses and EtherType (`0x0800`).
-   - **IPv4 Decapsulation:** Parse IP addresses, TTL, header length, and protocol identifier.
-   - **Protocol Filtering:** Check if protocol matches user filter.
-   - **Transport Layer Decapsulation:**
-     - If TCP (6): Decode ports, sequence/ack numbers, flags (`SYN`, `ACK`, `FIN`, `RST`, `PSH`, `URG`).
-     - If UDP (17): Decode ports, datagram length, checksum.
-     - If ICMP (1): Decode Type (Echo Request/Reply) and Code.
-   - **Payload Inspection:** Output 64-byte formatted Hex/ASCII dump.
-6. Print capture summary table and close raw socket.
-7. Stop.
+3. Check socket creation return value; if `< 0`, report error requiring root privileges (`sudo`) and exit.
+4. Execute capture loop for 5 frames:
+   - Call `recvfrom()` to read raw link-layer Ethernet frame into buffer.
+   - Cast start of buffer to `struct ethhdr *`.
+   - Display frame size and Source / Destination MAC addresses in hexadecimal format (`%02X`).
+   - Check if EtherType is IPv4 (`ntohs(eth->h_proto) == ETH_P_IP`).
+   - If IPv4:
+     - Cast payload offset (`buffer + sizeof(struct ethhdr)`) to `struct iphdr *`.
+     - Extract and print Source and Destination IP addresses using `inet_ntoa()`.
+     - Inspect `ip->protocol` field: print whether TCP (`6`), UDP (`17`), or ICMP (`1`).
+5. Close raw socket and exit.
 
 ---
 
@@ -123,96 +118,38 @@ flowchart LR
 
 ```bash
 cd exp10_raw_socket_packet_sniffer
-gcc -Wall -Wextra -O2 sniffer.c -o sniffer
-```
-
-### Execution (Requires `sudo`):
-**Interactive Mode:**
-```bash
+gcc sniffer.c -o sniffer
 sudo ./sniffer
-# Enter number of packets: 10
-# Select filter: 0 (All)
 ```
 
-**Command-line Arguments Mode:**
-```bash
-sudo ./sniffer 10 1    # Capture 10 TCP packets
-sudo ./sniffer 5 3     # Capture 5 ICMP packets
-```
-
-To generate traffic during capture, open a second terminal and run:
-```bash
-ping -c 3 8.8.8.8
-curl http://gaia.cs.umass.edu
-```
+*(Tip: In another terminal, generate network traffic such as `ping -c 3 8.8.8.8` or `curl http://example.com` to see live frames captured immediately).*
 
 ---
 
 ## 6. SAMPLE RUN OUTPUT
 
 ```text
-===============================================================
-   RAW SOCKET PACKET CAPTURING APPLICATION - EXPERIMENT 10     
-===============================================================
-Enter number of packets to capture [default 10]: 10
-Select protocol filter:
-  0. All Protocols (default)
-  1. TCP only
-  2. UDP only
-  3. ICMP only
-Enter choice (0-3): 0
+Raw Socket Sniffer started. Capturing 5 packets...
 
-[INFO] Sniffing on all interfaces (Filter: All Protocols)...
-[INFO] Capturing 10 packets (Press Ctrl+C to stop early)
+--- Packet #1 (98 bytes) ---
+MAC: 00:15:5D:89:12:01 -> 00:15:5D:89:12:02
+IP:  192.168.1.15 -> 8.8.8.8 | Protocol: ICMP (1)
 
-===============================================================
-[PACKET #1] Captured 98 bytes on wire
-===============================================================
-[ETHERNET HEADER]
-   Source MAC     : 00:15:5D:89:12:01
-   Destination MAC: 00:15:5D:89:12:02
-   Type           : IPv4 (0x0800)
-[INTERNET PROTOCOL (IPv4)]
-   Header Length  : 20 bytes (IHL: 5)
-   Total Length   : 84 bytes
-   TTL            : 64
-   Source IP      : 192.168.1.15
-   Destination IP : 8.8.8.8
-[INTERNET CONTROL MESSAGE PROTOCOL (ICMP)]
-   Type     : 8 (Echo Request)
-   Code     : 0
-   Checksum : 0x4A1F
+--- Packet #2 (74 bytes) ---
+MAC: 00:15:5D:89:12:01 -> 52:54:00:12:35:02
+IP:  192.168.1.15 -> 142.250.190.46 | Protocol: TCP (6)
 
-===============================================================
-[PACKET #2] Captured 74 bytes on wire
-===============================================================
-[ETHERNET HEADER]
-   Source MAC     : 00:15:5D:89:12:01
-   Destination MAC: 52:54:00:12:35:02
-   Type           : IPv4 (0x0800)
-[INTERNET PROTOCOL (IPv4)]
-   Header Length  : 20 bytes (IHL: 5)
-   Total Length   : 60 bytes
-   TTL            : 64
-   Source IP      : 192.168.1.15
-   Destination IP : 128.119.245.12
-[TRANSMISSION CONTROL PROTOCOL (TCP)]
-   Source Port      : 54320
-   Destination Port : 80
-   Sequence Number  : 284192019
-   Ack Number       : 0
-   Header Length    : 40 bytes
-   Flags            : SYN:1 ACK:0 FIN:0 RST:0 PSH:0 URG:0
+--- Packet #3 (60 bytes) ---
+MAC: 52:54:00:12:35:02 -> 00:15:5D:89:12:01
+IP:  142.250.190.46 -> 192.168.1.15 | Protocol: TCP (6)
 
-===============================================================
-                 PACKET CAPTURE SUMMARY                        
-===============================================================
-   Total Packets Processed : 10
-   TCP Packets             : 6
-   UDP Packets             : 2
-   ICMP Packets            : 2
-   Other / Non-IP Packets  : 0
-===============================================================
+--- Packet #4 (128 bytes) ---
+MAC: 00:15:5D:89:12:01 -> 52:54:00:12:35:02
+IP:  192.168.1.15 -> 1.1.1.1 | Protocol: UDP (17)
+
+--- Packet #5 (85 bytes) ---
+MAC: 52:54:00:12:35:02 -> 00:15:5D:89:12:01
+IP:  1.1.1.1 -> 192.168.1.15 | Protocol: UDP (17)
 ```
 
 ---
@@ -240,4 +177,4 @@ Enter choice (0-3): 0
 ---
 
 ## 8. RESULT
-A link-layer packet-capturing application was successfully developed and evaluated using Linux raw sockets (`AF_PACKET`). The program accurately captured live network frames, provided protocol filtering, dissected Ethernet, IPv4, TCP, UDP, and ICMP headers, displayed payload hex dumps, and provided capture statistics.
+A link-layer packet-capturing program was successfully developed and evaluated using Linux raw sockets (`AF_PACKET`). The program captured live network frames, decapsulated Ethernet headers to extract MAC addresses, and dissected IPv4 headers to resolve Source/Destination IP addresses and transport protocol types (TCP, UDP, ICMP).

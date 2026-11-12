@@ -7,32 +7,38 @@
 ---
 
 ## 1. AIM
-To design and implement a multi-user broadcast chat application using the Transmission Control Protocol (TCP) and POSIX threads (`pthreads`) in C on Linux, wherein:
-1. Multiple clients connect concurrently to a central chat server.
-2. Each client registers with a custom username.
-3. The server broadcasts chat messages to all connected participants.
-4. The server supports interactive commands:
-   - `/users` — Lists currently active online users.
-   - `/msg <user> <message>` — Sends a private direct message (whisper).
-   - `/help` — Displays chat commands.
-   - `/exit` — Disconnects cleanly with departure notifications.
-5. Mutex synchronization is employed to prevent race conditions during global client list management.
+To design and implement a concurrent multi-client chat server using the Transmission Control Protocol (TCP) and process concurrency (`fork()`) in C on Linux, wherein:
+1. Multiple clients connect concurrently to the central chat server.
+2. The server accepts each connection and spawns a dedicated child process via `fork()` to handle the client session.
+3. The client sends text messages, and the server converts them to uppercase and echoes them back.
+4. The client provides an interactive continuation prompt `(y/n)` to send multiple messages in a persistent session.
+5. Entering `'n'` signals termination via `"end\n"`, gracefully closing both client and server session sockets.
 
 ---
 
 ## 2. THEORETICAL BACKGROUND
 
-### 2.1 Multi-Threaded Concurrency Model
-In a multi-user chat server, multiple clients remain connected for extended periods. A single-threaded iterative server cannot handle multiple active clients simultaneously.
-Using POSIX Threads (`pthreads`):
-- The **Master Server Thread** calls `accept()` in a loop.
-- Upon each connection, it spawns a dedicated worker thread via `pthread_create()`.
-- Thread synchronization via `pthread_mutex_t` protects shared state (e.g. `clients[]` array).
+### 2.1 Multi-Process Concurrency Model (`fork()`)
+In a multi-client server, each connected client must be served simultaneously without blocking new incoming connections:
+- The **Parent Server Process** creates the listening socket (`lfd`), binds to port `2011`, and calls `listen(lfd, 5)`.
+- It executes an infinite loop waiting on `accept(lfd, ...)`.
+- Upon accepting a connection, `accept()` returns a new connected descriptor (`confd`).
+- The parent immediately calls `fork()`:
+  - **In Child Process (`childpid == 0`):** Closes the listening socket `close(lfd)` because the child only needs `confd`. It enters a message handling loop reading from the client, performing transformations (`toUpperCase()`), and echoing back the processed string. When the client terminates, the child closes `confd` and exits.
+  - **In Parent Process (`childpid > 0`):** Closes its copy of `confd` immediately using `close(confd)` to release resources, and returns to `accept()` to wait for the next client.
 
-### 2.2 Client-Side Concurrency
-A chat client must perform full-duplex communication:
-1. **Sender Thread:** Blocks on `fgets(stdin)` waiting for the user to type messages.
-2. **Receiver Thread:** Blocks on `recv(socket)` waiting for incoming broadcast messages from the server.
+### 2.2 Sockets API in POSIX C
+
+| System Call | Purpose |
+| :--- | :--- |
+| `socket(AF_INET, SOCK_STREAM, 0)` | Creates stream socket endpoint for TCP communication. |
+| `bind(lfd, &server, sizeof server)` | Associates socket with IP address `127.0.0.1` and port `2011`. |
+| `listen(lfd, 5)` | Places socket in passive listening state with a backlog queue of 5. |
+| `accept(lfd, &client, &n)` | Accepts incoming client connection and returns dedicated `confd`. |
+| `fork()` | Creates child process duplicating caller's memory and descriptors. |
+| `send(confd, buf, sizeof buf, 0)` | Transmits data buffer over connected TCP socket stream. |
+| `recv(confd, buf, sizeof buf, 0)` | Receives incoming byte stream from socket. |
+| `close(fd)` | Closes file descriptor and releases system resources. |
 
 ---
 
@@ -41,30 +47,25 @@ A chat client must perform full-duplex communication:
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Server as TCP Chat Server (Port 8082)
-    actor Alice as Client 1 (Alice)
-    actor Bob as Client 2 (Bob)
+    actor Client as TCP Client
+    participant Parent as Server Parent (accept)
+    participant Child as Server Child (fork)
 
-    Note over Server: listen() on Port 8082
-    Alice->>Server: Connect & Send "Alice"
-    Server-->>Alice: Welcome! Type /help or /exit
+    Client->>Parent: connect() [SYN, SYN-ACK, ACK]
+    Parent->>Parent: accept() returns confd
+    Parent->>Child: fork() spawns child worker
+    Parent->>Parent: close(confd) & resume accept()
     
-    Bob->>Server: Connect & Send "Bob"
-    Server-->>Alice: Broadcast: "Bob has joined the chat room"
-    Server-->>Bob: Welcome! Type /help or /exit
-    
-    Alice->>Server: "Hello everyone!"
-    Server-->>Bob: Broadcast: "[Alice]: Hello everyone!"
+    loop Chat Session
+        Client->>Child: send(lfd, sBuf) -> "hello server"
+        Child->>Child: toUpperCase(rBuf) -> "HELLO SERVER"
+        Child-->>Client: send(confd, rBuf) -> "HELLO SERVER"
+        Client->>Client: Prompt: Do you like to continue (y/n)
+    end
 
-    Bob->>Server: "/users"
-    Server-->>Bob: Send list: 1. Alice, 2. Bob (You)
-
-    Bob->>Server: "/msg Alice Hi Alice!"
-    Server-->>Alice: "[WHISPER from Bob]: Hi Alice!"
-    Server-->>Bob: "[WHISPER to Alice]: Hi Alice!"
-
-    Bob->>Server: "/exit"
-    Server-->>Alice: Broadcast: "Bob has left the chat room"
+    Client->>Child: send(lfd, "end\n")
+    Child->>Child: close(confd) & exit(0)
+    Client->>Client: close(lfd)
 ```
 
 ---
@@ -73,32 +74,41 @@ sequenceDiagram
 
 ### 4.1 Server Algorithm
 1. **Start**.
-2. Initialize `clients[]` array and `clients_mutex`.
-3. Create TCP socket, bind to `PORT 8082`, and call `listen()`.
-4. Accept incoming connections:
-   - For each client, allocate `client_t`, store socket and unique UID.
-   - Lock `clients_mutex`, add to registry, unlock mutex.
-   - Spawn worker thread `handle_client`.
-5. **In `handle_client` Thread:**
-   - Receive username, broadcast join message, send welcome text.
-   - While connected:
-     - If `/exit`: broadcast departure and break.
-     - If `/help`: send command guide to requester.
-     - If `/users`: compile online participant list under mutex and send to requester.
-     - If `/msg <target> <text>`: route private whisper only to target user and sender.
-     - Otherwise: broadcast `[User]: text` to all other participants.
-   - On disconnect: remove from client registry under mutex, close socket, free context, and detach thread.
-6. Stop.
+2. Create TCP socket using `socket(AF_INET, SOCK_STREAM, 0)`.
+3. Set address structure: `AF_INET`, port `htons(2011)`, address `inet_addr("127.0.0.1")`.
+4. Bind socket to server address using `bind()`.
+5. Call `listen(lfd, 5)` to listen for connections.
+6. Enter infinite accept loop:
+   - Call `confd = accept(lfd, (struct sockaddr *)&client, &n)`.
+   - Call `fork()`:
+     - If child process (`childpid == 0`):
+       - `close(lfd)` (child does not listen).
+       - While true:
+         - Clear buffer `memset(rBuf, 0, sizeof rBuf)`.
+         - Receive data using `recv(confd, rBuf, sizeof rBuf, 0)`.
+         - If `rBuf` is `"end\n"`, break loop.
+         - Call `toUpperCase(rBuf)`.
+         - Print client message and send uppercase string using `send()`.
+       - `close(confd)` and `exit(0)`.
+     - In parent process:
+       - `close(confd)`.
+7. Stop.
 
 ### 4.2 Client Algorithm
 1. **Start**.
-2. Prompt user for chat username.
-3. Connect to server (`127.0.0.1:8082`).
-4. Send username over socket.
-5. Spawn two threads:
-   - **Sender Thread:** Reads from `stdin`. If `/exit`, sends and terminates client. Otherwise transmits message.
-   - **Receiver Thread:** Calls `recv()` in loop, printing server and broadcast messages to terminal.
-6. Wait for exit signal, close socket, and stop.
+2. Create TCP socket using `socket(AF_INET, SOCK_STREAM, 0)`.
+3. Set server address structure: port `htons(2011)`, IP `127.0.0.1`.
+4. Connect to server using `connect(lfd, (struct sockaddr *)&server, sizeof server)`.
+5. Enter chat loop:
+   - Clear buffers using `memset()`.
+   - Prompt user: `printf("\nClient :")` and read using `fgets(sBuf, sizeof sBuf, stdin)`.
+   - Send message to server using `send(lfd, sBuf, sizeof sBuf, 0)`.
+   - Receive echoed response using `recv(lfd, rBuf, sizeof rBuf, 0)` and print.
+   - Prompt user: `printf("\nDo you like to continue (y/n) :")`.
+   - Read `choice` using `fgets()`.
+   - If choice is `'n'`, copy `"end\n"` into `sBuf`, send to server, and break loop.
+6. Close socket using `close(lfd)`.
+7. Stop.
 
 ---
 
@@ -106,8 +116,8 @@ sequenceDiagram
 
 ```bash
 cd exp07_tcp_multiuser_chat
-gcc -Wall -Wextra -O2 -pthread server.c -o server
-gcc -Wall -Wextra -O2 -pthread client.c -o client
+gcc server.c -o server
+gcc client.c -o client
 ```
 
 **Terminal 1 (Server):**
@@ -115,81 +125,74 @@ gcc -Wall -Wextra -O2 -pthread client.c -o client
 ./server
 ```
 
-**Terminal 2 (Client 1 - Alice):**
+**Terminal 2 (Client 1):**
 ```bash
 ./client
-# Username: Alice
 ```
 
-**Terminal 3 (Client 2 - Bob):**
+**Terminal 3 (Client 2):**
 ```bash
 ./client
-# Username: Bob
 ```
 
 ---
 
 ## 6. SAMPLE RUN OUTPUT
 
-### Terminal 2 (Alice):
+### Terminal 1 (Server Console):
 ```text
-=====================================================
-        TCP MULTI-USER CHAT CLIENT - EXPERIMENT 7    
-=====================================================
-Enter your username (max 31 chars): Alice
-[INFO] Connecting to Chat Server at 127.0.0.1:8082...
+Server ready,waiting for client....
+Client:hello server
+Server:HELLO SERVER
 
-=== Connected to Chat Room as "Alice" ===
-Commands: /help (show help) | /users (list users) | /msg <user> <text> | /exit (leave)
------------------------------------------------------
+Client:end
 
-Welcome to the chat room! Type /help for commands or /exit to quit.
->>> [SERVER]: "Bob" has joined the chat room <<<
-[Bob]: Hello everyone!
-[WHISPER from Bob]: Private test message!
->>> [SERVER]: "Bob" has left the chat room <<<
+Server ready,waiting for client....
+Client:testing client 2
+Server:TESTING CLIENT 2
+
+Client:end
 ```
 
-### Terminal 3 (Bob):
+### Terminal 2 (Client 1 Console):
 ```text
-=====================================================
-        TCP MULTI-USER CHAT CLIENT - EXPERIMENT 7    
-=====================================================
-Enter your username (max 31 chars): Bob
-[INFO] Connecting to Chat Server at 127.0.0.1:8082...
+Client ready....
 
-=== Connected to Chat Room as "Bob" ===
-Commands: /help (show help) | /users (list users) | /msg <user> <text> | /exit (leave)
------------------------------------------------------
+Client :hello server
+Server:HELLO SERVER
 
-Welcome to the chat room! Type /help for commands or /exit to quit.
-/users
---- Active Online Users ---
-  1. Alice
-  2. Bob (You)
----------------------------
+Do you like to continue (y/n) :y
 
-/msg Alice Private test message!
-[WHISPER to Alice]: Private test message!
+Client :how are you
+Server:HOW ARE YOU
 
-/exit
-[INFO] Exiting chat room. Goodbye!
+Do you like to continue (y/n) :n
+```
+
+### Terminal 3 (Client 2 Console):
+```text
+Client ready....
+
+Client :testing client 2
+Server:TESTING CLIENT 2
+
+Do you like to continue (y/n) :n
 ```
 
 ---
 
 ## 7. VIVA VOCE QUESTIONS & ANSWERS
 
-1. **Why is a mutex necessary in the multi-user chat server?**  
-   *Answer:* The global client list `clients[]` is shared across all concurrent worker threads. If two users connect or disconnect simultaneously, modifying the array without a mutex causes race conditions and memory corruption.
+1. **Why does the child process close `lfd` while the parent closes `confd`?**  
+   *Answer:* File descriptors are reference-counted in the operating system kernel. The listening socket `lfd` is needed only by the parent to accept future connections, so the child closes its copy. Conversely, the connected client socket `confd` is handled solely by the child, so the parent closes its descriptor so that when the child terminates, the TCP connection closes cleanly with a `FIN`.
 
-2. **Why does the client require two separate threads?**  
-   *Answer:* Full-duplex communication. Reading keyboard input (`fgets()`) and receiving incoming network data (`recv()`) are both blocking system calls. Two threads allow reading and receiving concurrently without either blocking the other.
+2. **What is the difference between multi-process (`fork`) and multi-threaded (`pthread`) concurrency?**  
+   *Answer:* `fork()` creates an entirely separate address space with isolated memory, preventing one client crash from corrupting others, but has higher process creation and context-switch overhead. Threads share the same virtual memory space within a single process, making them lightweight and fast to switch, but require mutex locks to avoid race conditions.
 
-3. **What is the difference between `pthread_join()` and `pthread_detach()`?**  
-   *Answer:* `pthread_join()` blocks until the target thread terminates and reaps its resources. `pthread_detach()` marks the thread so its resources are automatically reclaimed by the OS immediately upon termination, ideal for independent server worker threads.
+3. **What is a Zombie process and how does it occur in `fork()` servers?**  
+   *Answer:* A zombie process is a child process that has completed execution via `exit()` but still has an entry in the OS process table because its parent has not yet read its exit status using `wait()` or `waitpid()`. In production servers, setting `signal(SIGCHLD, SIG_IGN)` or handling `SIGCHLD` automatically reaps terminated children.
 
 ---
 
 ## 8. RESULT
-A multi-user broadcast chat application using TCP sockets and POSIX threads was successfully implemented and evaluated. The server managed concurrent client connections, broadcast group messages, supported private whispers (`/msg`) and user listings (`/users`), and synchronized shared resources using mutexes.
+A concurrent multi-client TCP chat server using process-based concurrency (`fork()`) in C was successfully designed, implemented, and verified. The server handled multiple concurrent client connections, transformed incoming text messages to uppercase, and cleanly terminated active sessions.

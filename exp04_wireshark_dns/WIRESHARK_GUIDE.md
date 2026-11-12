@@ -31,7 +31,7 @@ According to the syllabus (PCCSL507):
 You have two reliable options to perform and evaluate this experiment:
 
 ### 🟢 OPTION A (Instant Offline Verification — 100% Guaranteed):
-This folder contains an authentic pre-recorded packet trace: [`dns_traffic.pcap`](file:///C:/Users/akhil/Desktop/networklab/exp04_wireshark_dns/dns_traffic.pcap).
+This folder contains an authentic pre-recorded packet trace: [`dns_traffic.pcap`](exp04_wireshark_dns/dns_traffic.pcap).
 1. Open **Wireshark**.
 2. Click **File $\rightarrow$ Open** (or press `Ctrl + O`).
 3. Select `exp04_wireshark_dns/dns_traffic.pcap`.

@@ -27,11 +27,24 @@ According to the KTU PCCSL507 syllabus:
 
 ## 2. CISCO PACKET TRACER TOPOLOGY SETUP
 
+> [!IMPORTANT]
+> ### Modern Packet Tracer Hardware Selection (PT 8.x / 7.x & CCNA Standards)
+> The legacy router models shown in the university syllabus diagram (`Cisco 2621` and `Cisco 2501`) are discontinued and **not available** in modern Cisco Packet Tracer versions.
+> Across engineering universities (KTU, VTU, Anna Univ) and CCNAv7 curricula, the following modern devices and interface mappings are standard:
+> 1. **Primary Modern Router**: Select **Cisco 1941 (ISR G2)** or **Cisco 2911** from the bottom router shelf.
+> 2. **Serial WAN Module**: Install the **`HWIC-2T`** (High-Speed WAN Interface Card) in **Slot 0** (Power OFF router in *Physical* tab -> drag `HWIC-2T` to Slot 0 -> Power ON).
+> 3. **Interface Names**:
+>    - **LAN Ethernet**: **`GigabitEthernet 0/0` (`g0/0`)** replaces legacy `FastEthernet 0/0`.
+>    - **Serial WAN**: **`Serial 0/0/0` (`s0/0/0`)** and **`Serial 0/0/1` (`s0/0/1`)**.
+> 4. **Alternative Generic Option**: You may also use the **Router-PT (Generic)** with `PT-ROUTER-NM-1FFE` and `PT-ROUTER-NM-1SS`.
+> *(If your college lab computers run legacy 2811 routers, simply use `FastEthernet 0/0` instead of `GigabitEthernet 0/0`).*
+
+
 To practice all commands (especially Serial DTE/DCE controller and clock rate), we will configure two routers connected back-to-back via a Serial link, plus a local Ethernet LAN connection.
 
 ### Topology Diagram (ASCII)
 ```text
-           [FastEthernet 0/0]                      [Serial 0/0/0 (DTE)]
+           [GigabitEthernet 0/0]                      [Serial 0/0/0 (DTE)]
  [PC-A] ===================== [ Router-1 ] ------------------------- [ Router-2 ]
 172.16.10.10          172.16.10.1          172.16.20.1 (DCE)      172.16.20.2
 (LAN Host)             (Gateway)           Clock Rate: 64000
@@ -40,20 +53,28 @@ To practice all commands (especially Serial DTE/DCE controller and clock rate), 
 ### Mermaid Topology Diagram
 ```mermaid
 graph LR
-    subgraph LAN_10 ["LAN Subnet: 172.16.10.0/24"]
-        PC["PC-A\n172.16.10.10/24\nGW: 172.16.10.1"]
+    %% Subnet Containers
+    subgraph LAN10 ["LAN: 172.16.10.0/24"]
+        direction TB
+        PC["<b>PC-A</b><br/>IP: 172.16.10.10/24<br/>GW: 172.16.10.1"]
     end
 
-    subgraph R1_BOX ["Router 1 (2811 / 1941)"]
-        R1["Router-1\nFa0/0: 172.16.10.1\nSe0/0/0: 172.16.20.1 (DCE)"]
+    subgraph WAN20 ["WAN Link: 172.16.20.0/30"]
+        direction LR
+        R1["<b>Router-1</b><br/>(Cisco 1941 / 2811)<br/><i>Role: DCE</i>"]
+        R2["<b>Router-2</b><br/>(Cisco 1941 / 2811)<br/><i>Role: DTE</i>"]
     end
 
-    subgraph R2_BOX ["Router 2 (2811 / 1941)"]
-        R2["Router-2\nSe0/0/0: 172.16.20.2 (DTE)"]
-    end
+    %% Connections
+    PC ---|FastEthernet 0 to Gig0/0| R1
+    R1 ---|Serial 0/0/0 .1 - DCE Clock 64000 to Serial 0/0/0 .2| R2
 
-    PC ---|Copper Straight-Through| R1
-    R1 ===|Serial DCE Cable (Clock Rate 64000)| R2
+    %% Styling
+    classDef device fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
+    classDef pc fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+
+    class R1,R2 device;
+    class PC pc;
 ```
 
 ---
@@ -63,19 +84,19 @@ graph LR
 ### Step 3.1: Choosing Devices
 1. In the bottom-left device panel, select **Network Devices $\rightarrow$ Routers**.
 2. Drag two routers onto the workspace:
-   - **Router 1:** Cisco 2811 (or Cisco 1941)
-   - **Router 2:** Cisco 2811 (or Cisco 1941)
+   - **Router 1:** Cisco 1941 (Primary Standard in PT 8.x) or Cisco 2911 / Router-PT
+   - **Router 2:** Cisco 1941 (Primary Standard in PT 8.x) or Cisco 2911 / Router-PT
 3. Select **End Devices $\rightarrow$ PC**, drag one **PC-PT** onto the workspace (name it `PC-A`).
 
-### Step 3.2: Installing Serial Interface Cards (WIC-2T)
+### Step 3.2: Installing Serial Interface Cards (HWIC-2T)
 > [!IMPORTANT]
 > Cisco 2811 and 1941 routers do not have serial ports installed by default. You must add the serial module manually!
 
 1. Click on **Router 1** to open its device dialog.
 2. Select the **Physical** tab.
 3. Turn **OFF** the power switch on the router (small green/black rocker switch on the right side).
-4. From the left **MODULES** list, click **WIC-2T** (2-port serial high-speed WAN interface card).
-5. Drag the **WIC-2T** card into the empty slot `Slot 0` (WIC 0).
+4. From the left **MODULES** list, click **HWIC-2T** (2-port serial high-speed WAN interface card).
+5. Drag the **HWIC-2T** card into the empty slot `Slot 0` (WIC 0).
 6. Turn the power switch back **ON**.
 7. Repeat the exact same steps for **Router 2**.
 
@@ -84,7 +105,7 @@ graph LR
 2. **PC-A to Router 1:**
    - Select **Copper Straight-Through Cable** (solid black line).
    - Click `PC-A` $\rightarrow$ choose `FastEthernet0`.
-   - Click `Router 1` $\rightarrow$ choose `FastEthernet0/0`.
+   - Click `Router 1` $\rightarrow$ choose `GigabitEthernet0/0`.
 3. **Router 1 to Router 2 (Serial DCE/DTE):**
    - Select **Serial DCE Cable** (red jagged wire with a small clock symbol).
    - Click `Router 1` first $\rightarrow$ choose `Serial0/0/0` (This end becomes the **DCE** end).
@@ -180,7 +201,7 @@ Codes: C - connected, S - static, R - RIP, M - mobile, B - BGP
 
 Gateway of last resort is not set
 
-C    172.16.10.0/24 is directly connected, FastEthernet0/0
+C    172.16.10.0/24 is directly connected, GigabitEthernet0/0
 C    172.16.20.0/24 is directly connected, Serial0/0/0
 ```
 
@@ -261,7 +282,7 @@ Router# show ip interface brief
 **Sample Output:**
 ```text
 Interface              IP-Address      OK? Method Status                Protocol
-FastEthernet0/0        172.16.10.1     YES manual up                    up      
+GigabitEthernet0/0        172.16.10.1     YES manual up                    up      
 FastEthernet0/1        unassigned      YES unset  administratively down down    
 Serial0/0/0            172.16.20.1     YES manual up                    up      
 Serial0/0/1            unassigned      YES unset  administratively down down    
@@ -269,7 +290,7 @@ Serial0/0/1            unassigned      YES unset  administratively down down
 
 #### 2. Detailed View (Full hardware parameters, MTU, bandwidth, packets sent/received, CRC errors):
 ```text
-Router# show interfaces FastEthernet0/0
+Router# show interfaces GigabitEthernet0/0
 Router# show interfaces Serial0/0/0
 ```
 
@@ -307,8 +328,8 @@ Router> enable
 Router# configure terminal
 Router(config)# hostname Router1
 
-! Configure FastEthernet0/0 (LAN Interface)
-Router1(config)# interface FastEthernet0/0
+! Configure GigabitEthernet0/0 (LAN Interface)
+Router1(config)# interface GigabitEthernet0/0
 Router1(config-if)# description LAN connection to PC-A
 Router1(config-if)# ip address 172.16.10.1 255.255.255.0
 Router1(config-if)# no shutdown
@@ -380,5 +401,5 @@ Router2# copy running-config startup-config
 | :--- | :--- | :--- | :--- |
 | **Basic Router Configuration in Cisco Packet Tracer** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Hostname, modes, interface IPs, saving configs, command history. |
 | **Cisco Packet Tracer Basic Router Configuration** | Keith Barker (CBT Nuggets) | [Watch on YouTube](https://www.youtube.com/watch?v=kYJzXv-i2_E) | CLI modes, interface assignment, `show ip interface brief`. |
-| **Connecting Two Routers via Serial Cable in Packet Tracer** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=4T19U81s4kY) | Installing WIC-2T cards, DCE/DTE cabling, clock rate configuration. |
+| **Connecting Two Routers via Serial Cable in Packet Tracer** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=4T19U81s4kY) | Installing HWIC-2T cards, DCE/DTE cabling, clock rate configuration. |
 | **Cisco IOS CLI Navigation & Show Commands** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | `show version`, `show controllers`, command history, clock setting. |

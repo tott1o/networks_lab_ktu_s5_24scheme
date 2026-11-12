@@ -7,14 +7,14 @@
 ---
 
 ## 1. AIM
-To familiarize essential Cisco IOS router commands using Cisco Packet Tracer, including navigating CLI command modes, inspecting system information and hardware statistics, managing configurations, checking routing tables, and configuring Serial and FastEthernet interfaces with IP addresses and clock rates.
+To familiarize essential Cisco IOS router commands using Cisco Packet Tracer, including navigating CLI command modes, inspecting system information and hardware statistics, managing configurations, checking routing tables, and configuring Serial and GigabitEthernet and Serial interfaces with IP addresses and clock rates.
 
 ---
 
 ## 2. HARDWARE AND SOFTWARE REQUIREMENTS
 1. **Software:** Cisco Packet Tracer (v7.x / v8.x or above)
 2. **Devices Simulated:**
-   - 2 × Cisco Routers (2811 / 1941 series) equipped with WIC-2T Serial WAN modules
+   - 2 × Cisco Routers (Cisco 1941 / 2911 ISR series; or 2811 / Router-PT) equipped with HHWIC-2T (or HWIC-2T) Serial WAN modules
    - 1 × PC (Workstation)
    - Cables: Copper Straight-Through cable, Serial DCE-to-DTE cable
 3. **Host System:** Personal Computer running Windows / Linux with Packet Tracer installed
@@ -61,7 +61,7 @@ Cisco Internetwork Operating System (IOS) organizes command execution into hiera
        |  Se0/0/0: 172.16.20.1 |=========================|  Se0/0/0: 172.16.20.2 |
        |     [DCE - 64000]     |       Serial DCE/DTE    |         [DTE]         |
        +-----------+-----------+                         +-----------------------+
-                   | Fa0/0: 172.16.10.1/24
+                   | Gig0/0: 172.16.10.1/24
                    | (Copper Straight-Through)
                    |
        +-----------+-----------+
@@ -77,7 +77,7 @@ Cisco Internetwork Operating System (IOS) organizes command execution into hiera
 
 1. **Topology Creation:**
    - Place two 2811 routers and one generic PC into the workspace.
-   - Power down each router in the **Physical** tab, insert a `WIC-2T` module in `Slot 0`, and power on.
+   - Power down each router in the **Physical** tab, insert a `HWIC-2T` module in `Slot 0`, and power on.
    - Connect PC-A to Router-1 using a Copper Straight-Through cable.
    - Connect Router-1 to Router-2 using a Serial DCE cable (Router-1 gets the DCE end).
 2. **Mode Switching:**
@@ -90,7 +90,7 @@ Cisco Internetwork Operating System (IOS) organizes command execution into hiera
    - Add static host mapping and view using `show hosts`.
    - Inspect command history using `show history` and alter buffer size with `terminal history size`.
 5. **Interface Configuration:**
-   - On Router-1, assign IP `172.16.10.1/24` to `Fa0/0` and bring up interface with `no shutdown`.
+   - On Router-1, assign IP `172.16.10.1/24` to `GigabitEthernet0/0` and bring up interface with `no shutdown`.
    - On Router-1, assign IP `172.16.20.1/24` to `Se0/0/0`, set `clock rate 64000`, and execute `no shutdown`.
    - On Router-2, assign IP `172.16.20.2/24` to `Se0/0/0` and execute `no shutdown`.
 6. **Controller Inspection & Verification:**
@@ -128,7 +128,7 @@ ROM: System Bootstrap, Version 12.4(13r)T
 Router uptime is 22 minutes
 System image file is "flash:c2800nm-advipservicesk9-mz.124-15.T1.bin"
 Cisco 2811 (revision 1.0) with 249856K/12288K bytes of memory.
-2 FastEthernet interfaces
+2 GigabitEthernet and Serial interfaces
 2 Serial(sync/async) interfaces
 239K bytes of non-volatile configuration memory.
 62720K bytes of ATA CompactFlash (Read/Write)
@@ -150,7 +150,7 @@ Router# show ip route
 Codes: C - connected, S - static, R - RIP, M - mobile, B - BGP
 Gateway of last resort is not set
 
-C    172.16.10.0/24 is directly connected, FastEthernet0/0
+C    172.16.10.0/24 is directly connected, GigabitEthernet0/0
 C    172.16.20.0/24 is directly connected, Serial0/0/0
 ```
 
@@ -202,7 +202,7 @@ PC-A                      None  (temp, OK)  0   IP     172.16.10.10
 ```text
 Router# show ip interface brief
 Interface              IP-Address      OK? Method Status                Protocol
-FastEthernet0/0        172.16.10.1     YES manual up                    up      
+GigabitEthernet0/0        172.16.10.1     YES manual up                    up      
 FastEthernet0/1        unassigned      YES unset  administratively down down    
 Serial0/0/0            172.16.20.1     YES manual up                    up      
 Serial0/0/1            unassigned      YES unset  administratively down down    
@@ -238,7 +238,7 @@ DTE V.35, TX and RX clocks detected
 ### Task (l): Configuring Serial and Ethernet interfaces
 - **Router 1 CLI Input:**
 ```text
-Router1(config)# interface FastEthernet0/0
+Router1(config)# interface GigabitEthernet0/0
 Router1(config-if)# ip address 172.16.10.1 255.255.255.0
 Router1(config-if)# no shutdown
 Router1(config-if)# exit
@@ -298,4 +298,4 @@ Ping statistics: Packets: Sent = 4, Received = 4, Lost = 0 (0% loss)
 ---
 
 ## 9. RESULT
-All fundamental Cisco IOS router commands were successfully executed and verified in Cisco Packet Tracer. Serial and FastEthernet interfaces were configured, hardware controller types were verified, and end-to-end IP reachability was established.
+All fundamental Cisco IOS router commands were successfully executed and verified in Cisco Packet Tracer. Serial and GigabitEthernet and Serial interfaces were configured, hardware controller types were verified, and end-to-end IP reachability was established.

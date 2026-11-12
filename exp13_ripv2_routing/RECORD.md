@@ -14,7 +14,7 @@ To implement the Routing Information Protocol version 2 (RIPv2) on the multi-rou
 ## 2. HARDWARE AND SOFTWARE REQUIREMENTS
 1. **Simulation Platform:** Cisco Packet Tracer (v8.x or above)
 2. **Devices Simulated:**
-   - 4 × Cisco 2811 Routers with WIC-2T serial modules
+   - 4 × Cisco 2811 Routers with HWIC-2T serial modules
    - 3 × End-user PCs (PC-1, PC-2, PC-3)
    - 1 × Cisco Catalyst 2960 Switch
    - Cables: Serial DCE/DTE cables, Copper Straight-Through cables
@@ -53,9 +53,9 @@ The Routing Information Protocol (RIP) is an Interior Gateway Protocol (IGP) bas
   [172.16.10.0/24]                [172.16.20.0/24]                 [172.16.40.0/24]              [172.16.50.0/24]
        Ethernet                      Serial WAN                       Serial WAN                      Ethernet
  [Router 2621] ============ [Router 2501A] ----------------- [Router 2501B] ----------------- [Router 2501C] === [PC-3]
-   Fa0/0: .1                 Fa0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Fa0/0: .1    .10
+   Gig0/0: .1                 Gig0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Gig0/0: .1    .10
        |                                                    |                                           
-     [PC-1]                                               Fa0/0: .1                                     
+     [PC-1]                                               Gig0/0: .1                                     
       .10                                                   |                                           
                                                           [PC-2] .10                                    
                                                      [172.16.30.0/24] LAN                               
@@ -67,14 +67,14 @@ The Routing Information Protocol (RIP) is an Interior Gateway Protocol (IGP) bas
 
 | Device | Interface | IP Address | Subnet Mask | Connected Subnet |
 | :--- | :--- | :--- | :--- | :--- |
-| **Router 2621** | `Fa0/0` | `172.16.10.1` | `255.255.255.0` | 172.16.10.0/24 |
-| **Router 2501A**| `Fa0/0` | `172.16.10.2` | `255.255.255.0` | 172.16.10.0/24 |
+| **Router 2621** | `Gig0/0` | `172.16.10.1` | `255.255.255.0` | 172.16.10.0/24 |
+| **Router 2501A**| `Gig0/0` | `172.16.10.2` | `255.255.255.0` | 172.16.10.0/24 |
 | | `Se0/0/0` | `172.16.20.1` | `255.255.255.0` | 172.16.20.0/24 (DCE, 64000) |
 | **Router 2501B**| `Se0/0/0` | `172.16.20.2` | `255.255.255.0` | 172.16.20.0/24 (DTE) |
-| | `Fa0/0` | `172.16.30.1` | `255.255.255.0` | 172.16.30.0/24 |
+| | `Gig0/0` | `172.16.30.1` | `255.255.255.0` | 172.16.30.0/24 |
 | | `Se0/0/1` | `172.16.40.1` | `255.255.255.0` | 172.16.40.0/24 (DCE, 64000) |
 | **Router 2501C**| `Se0/0/0` | `172.16.40.2` | `255.255.255.0` | 172.16.40.0/24 (DTE) |
-| | `Fa0/0` | `172.16.50.1` | `255.255.255.0` | 172.16.50.0/24 |
+| | `Gig0/0` | `172.16.50.1` | `255.255.255.0` | 172.16.50.0/24 |
 | **PC-1** | `FastEthernet0` | `172.16.10.10` | `255.255.255.0` | GW: 172.16.10.1 |
 | **PC-2** | `FastEthernet0` | `172.16.30.10` | `255.255.255.0` | GW: 172.16.30.1 |
 | **PC-3** | `FastEthernet0` | `172.16.50.10` | `255.255.255.0` | GW: 172.16.50.1 |
@@ -91,7 +91,7 @@ The Routing Information Protocol (RIP) is an Interior Gateway Protocol (IGP) bas
    - Specify version 2: `version 2`
    - Disable automatic summarization: `no auto-summary`
    - Advertise major network: `network 172.16.0.0`
-5. On LAN interfaces (e.g., `FastEthernet0/0` on 2501B and 2501C), configure `passive-interface` to stop sending unnecessary RIP multicast traffic onto end-user subnets.
+5. On LAN interfaces (e.g., `GigabitEthernet0/0` on 2501B and 2501C), configure `passive-interface` to stop sending unnecessary RIP multicast traffic onto end-user subnets.
 6. Allow approximately 30–60 seconds for RIP convergence.
 7. Inspect routing protocols using `show ip protocols` and inspect routing tables using `show ip route`.
 8. Verify end-to-end communication from PC-1 to PC-3 using `ping` and trace path using `tracert`.
@@ -105,7 +105,7 @@ The Routing Information Protocol (RIP) is an Interior Gateway Protocol (IGP) bas
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2621
-R_2621(config)# interface FastEthernet0/0
+R_2621(config)# interface GigabitEthernet0/0
 R_2621(config-if)# ip address 172.16.10.1 255.255.255.0
 R_2621(config-if)# no shutdown
 R_2621(config-if)# exit
@@ -122,7 +122,7 @@ R_2621# copy running-config startup-config
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2501A
-R_2501A(config)# interface FastEthernet0/0
+R_2501A(config)# interface GigabitEthernet0/0
 R_2501A(config-if)# ip address 172.16.10.2 255.255.255.0
 R_2501A(config-if)# no shutdown
 R_2501A(config-if)# exit
@@ -148,7 +148,7 @@ R_2501B(config)# interface Serial0/0/0
 R_2501B(config-if)# ip address 172.16.20.2 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
-R_2501B(config)# interface FastEthernet0/0
+R_2501B(config)# interface GigabitEthernet0/0
 R_2501B(config-if)# ip address 172.16.30.1 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
@@ -161,7 +161,7 @@ R_2501B(config)# router rip
 R_2501B(config-router)# version 2
 R_2501B(config-router)# no auto-summary
 R_2501B(config-router)# network 172.16.0.0
-R_2501B(config-router)# passive-interface FastEthernet0/0
+R_2501B(config-router)# passive-interface GigabitEthernet0/0
 R_2501B(config-router)# end
 R_2501B# copy running-config startup-config
 ```
@@ -175,7 +175,7 @@ R_2501C(config)# interface Serial0/0/0
 R_2501C(config-if)# ip address 172.16.40.2 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
-R_2501C(config)# interface FastEthernet0/0
+R_2501C(config)# interface GigabitEthernet0/0
 R_2501C(config-if)# ip address 172.16.50.1 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
@@ -183,7 +183,7 @@ R_2501C(config)# router rip
 R_2501C(config-router)# version 2
 R_2501C(config-router)# no auto-summary
 R_2501C(config-router)# network 172.16.0.0
-R_2501C(config-router)# passive-interface FastEthernet0/0
+R_2501C(config-router)# passive-interface GigabitEthernet0/0
 R_2501C(config-router)# end
 R_2501C# copy running-config startup-config
 ```
@@ -207,7 +207,7 @@ Routing Protocol is "rip"
   Routing for Networks:
     172.16.0.0
   Passive Interface(s):
-    FastEthernet0/0
+    GigabitEthernet0/0
   Routing Information Sources:
     Gateway         Distance      Last Update
     172.16.20.1          120      00:00:14
@@ -226,7 +226,7 @@ Gateway of last resort is not set
      172.16.0.0/24 is subnetted, 5 subnets
 R       172.16.10.0 [120/1] via 172.16.20.1, 00:00:14, Serial0/0/0
 C       172.16.20.0 is directly connected, Serial0/0/0
-C       172.16.30.0 is directly connected, FastEthernet0/0
+C       172.16.30.0 is directly connected, GigabitEthernet0/0
 C       172.16.40.0 is directly connected, Serial0/0/1
 R       172.16.50.0 [120/1] via 172.16.40.2, 00:00:07, Serial0/0/1
 ```

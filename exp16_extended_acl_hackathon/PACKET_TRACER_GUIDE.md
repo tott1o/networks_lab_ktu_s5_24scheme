@@ -17,6 +17,19 @@ According to the KTU PCCSL507 syllabus:
 
 ## 2. SUBNETTING DESIGN & ADDRESS CALCULATIONS
 
+> [!IMPORTANT]
+> ### Modern Packet Tracer Hardware Selection (PT 8.x / 7.x & CCNA Standards)
+> The legacy router models shown in the university syllabus diagram (`Cisco 2621` and `Cisco 2501`) are discontinued and **not available** in modern Cisco Packet Tracer versions.
+> Across engineering universities (KTU, VTU, Anna Univ) and CCNAv7 curricula, the following modern devices and interface mappings are standard:
+> 1. **Primary Modern Router**: Select **Cisco 1941 (ISR G2)** or **Cisco 2911** from the bottom router shelf.
+> 2. **Serial WAN Module**: Install the **`HWIC-2T`** (High-Speed WAN Interface Card) in **Slot 0** (Power OFF router in *Physical* tab -> drag `HWIC-2T` to Slot 0 -> Power ON).
+> 3. **Interface Names**:
+>    - **LAN Ethernet**: **`GigabitEthernet 0/0` (`g0/0`)** replaces legacy `FastEthernet 0/0`.
+>    - **Serial WAN**: **`Serial 0/0/0` (`s0/0/0`)** and **`Serial 0/0/1` (`s0/0/1`)**.
+> 4. **Alternative Generic Option**: You may also use the **Router-PT (Generic)** with `PT-ROUTER-NM-1FFE` and `PT-ROUTER-NM-1SS`.
+> *(If your college lab computers run legacy 2811 routers, simply use `FastEthernet 0/0` instead of `GigabitEthernet 0/0`).*
+
+
 ### 2.1 Subnetting Mathematical Calculation
 - **Major Network Address:** `140.80.0.0` (Class B Network)
 - **Default Mask:** `/16` (`255.255.0.0`)
@@ -43,7 +56,7 @@ According to the KTU PCCSL507 syllabus:
    - **Subnet:** `140.80.32.0/21`
    - **Subnet Mask:** `255.255.248.0`
    - **Wildcard Mask:** $255.255.255.255 - 255.255.248.0 = \mathbf{0.0.7.255}$
-   - **Default Gateway (Router Fa0/0):** `140.80.32.1`
+   - **Default Gateway (Router Gig0/0):** `140.80.32.1`
    - **CCF Student PC:** `140.80.32.10`
 2. **Hackathon Server (7th address in 16th Subnet):**
    - 1st address: `140.80.128.1` (Default Gateway)
@@ -69,11 +82,11 @@ According to the KTU PCCSL507 syllabus:
                 |                                                                  |
            [Switch CCF]                                                       [Switch CSE]
                 |                                                                  |
-            Fa0/0: .1                                                          Fa0/0: .1
+            Gig0/0: .1                                                          Gig0/0: .1
        [ Router-CCF (R1) ] ============================================== [ Router-CSE (R2) ]
         Se0/0/0: 10.0.0.1                  WAN Serial Link                 Se0/0/0: 10.0.0.2
        [ APPLY EXTENDED ACL 101 ]           (10.0.0.0/30)
-          (Inbound on Fa0/0)
+          (Inbound on Gig0/0)
 ```
 
 ### Mermaid Topology Diagram
@@ -81,11 +94,11 @@ According to the KTU PCCSL507 syllabus:
 graph LR
     subgraph CCF_FACILITY ["Central Computing Facility (Subnet 4: 140.80.32.0/21)"]
         CCF_PC["CCF Student PC\n140.80.32.10\nGW: 140.80.32.1"] --- SW_CCF["Switch CCF"]
-        SW_CCF --- R1["Router-CCF\nFa0/0: 140.80.32.1\n*** ACL 101 APPLIED INBOUND ***"]
+        SW_CCF --- R1["Router-CCF\nGig0/0: 140.80.32.1\n*** ACL 101 APPLIED INBOUND ***"]
     end
 
     subgraph WAN_LINK ["Inter-Department WAN (10.0.0.0/30)"]
-        R1 ===|Serial DCE/DTE 64kbps| R2["Router-CSE\nSe0/0/0: 10.0.0.2\nFa0/0: 140.80.128.1"]
+        R1 ===|Serial DCE/DTE 64kbps| R2["Router-CSE\nSe0/0/0: 10.0.0.2\nGig0/0: 140.80.128.1"]
     end
 
     subgraph CSE_SERVERS ["CSE Department (Subnet 16: 140.80.128.0/21)"]
@@ -108,14 +121,14 @@ Extended ACLs inspect:
 ### The Golden Rule of Extended ACL Placement
 > [!IMPORTANT]
 > **Extended ACLs must ALWAYS be placed as close to the source as possible!**  
-> Because extended ACLs specify both source, destination, and exact port number, they can filter unauthorized packets right at the entry interface (`in` on Router-CCF `Fa0/0`). This prevents denied packets from traveling across the serial WAN link, saving precious router CPU cycles and network bandwidth!
+> Because extended ACLs specify both source, destination, and exact port number, they can filter unauthorized packets right at the entry interface (`in` on Router-CCF `Gig0/0`). This prevents denied packets from traveling across the serial WAN link, saving precious router CPU cycles and network bandwidth!
 
 ---
 
 ## 5. STEP-BY-STEP CISCO PACKET TRACER SETUP
 
 ### Step 5.1: Device Selection & Wiring
-1. Place 2 × **Cisco 2811 Routers** (`Router-CCF` and `Router-CSE`). Add `WIC-2T` serial modules to both.
+1. Place 2 × **Cisco 1941 (Current Standard in PT 8.x) or Cisco 2911 / Router-PT Routers** (`Router-CCF` and `Router-CSE`). Add `HWIC-2T` serial modules to both.
 2. Place 2 × **Cisco 2960 Switches**.
 3. Place 1 × **PC** (`CCF Student PC`) and 1 × **Server-PT** (`Hackathon Server`).
 4. Wire PC and Server to switches using **Copper Straight-Through Cables**.
@@ -148,7 +161,7 @@ Router# configure terminal
 Router(config)# hostname Router-CCF
 
 ! 1. Interface IP Configuration
-Router-CCF(config)# interface FastEthernet0/0
+Router-CCF(config)# interface GigabitEthernet0/0
 Router-CCF(config-if)# ip address 140.80.32.1 255.255.248.0
 Router-CCF(config-if)# no shutdown
 Router-CCF(config-if)# exit
@@ -177,7 +190,7 @@ Router-CCF(config)# access-list 101 deny tcp 140.80.32.0 0.0.7.255 host 140.80.1
 Router-CCF(config)# access-list 101 permit ip any any
 
 ! 4. Apply ACL Inbound on the CCF Interface (Close to Source)
-Router-CCF(config)# interface FastEthernet0/0
+Router-CCF(config)# interface GigabitEthernet0/0
 Router-CCF(config-if)# ip access-group 101 in
 Router-CCF(config-if)# end
 Router-CCF# copy running-config startup-config
@@ -195,7 +208,7 @@ Router-CSE(config-if)# ip address 10.0.0.2 255.255.255.252
 Router-CSE(config-if)# no shutdown
 Router-CSE(config-if)# exit
 
-Router-CSE(config)# interface FastEthernet0/0
+Router-CSE(config)# interface GigabitEthernet0/0
 Router-CSE(config-if)# ip address 140.80.128.1 255.255.248.0
 Router-CSE(config-if)# no shutdown
 Router-CSE(config-if)# exit

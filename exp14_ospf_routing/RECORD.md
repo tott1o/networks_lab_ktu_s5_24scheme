@@ -14,7 +14,7 @@ To implement single-area Open Shortest Path First (OSPFv2) dynamic routing acros
 ## 2. HARDWARE AND SOFTWARE REQUIREMENTS
 1. **Simulation Environment:** Cisco Packet Tracer (v8.x or above)
 2. **Devices Simulated:**
-   - 4 × Cisco 2811 series Routers equipped with WIC-2T modules
+   - 4 × Cisco 2811 series Routers equipped with HWIC-2T modules
    - 3 × Generic Workstation PCs (PC-1, PC-2, PC-3)
    - 1 × Catalyst 2960 Switch
    - Cabling: Serial DCE/DTE cables, Copper Straight-Through cables
@@ -53,9 +53,9 @@ Each router then executes **Dijkstra's Shortest Path First (SPF) algorithm** usi
   [172.16.10.0/24]                [172.16.20.0/24]                 [172.16.40.0/24]              [172.16.50.0/24]
        Ethernet                      Serial WAN                       Serial WAN                      Ethernet
  [Router 2621] ============ [Router 2501A] ----------------- [Router 2501B] ----------------- [Router 2501C] === [PC-3]
-   Fa0/0: .1                 Fa0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Fa0/0: .1    .10
+   Gig0/0: .1                 Gig0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Gig0/0: .1    .10
        |                                                    |                                           
-     [PC-1]                                               Fa0/0: .1                                     
+     [PC-1]                                               Gig0/0: .1                                     
       .10                                                   |                                           
                                                           [PC-2] .10                                    
                                                      [172.16.30.0/24] LAN                               
@@ -68,14 +68,14 @@ Each router then executes **Dijkstra's Shortest Path First (SPF) algorithm** usi
 
 | Device | Interface | IP Address | Subnet Mask | Wildcard Mask | OSPF Area |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Router 2621** | `Fa0/0` | `172.16.10.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
-| **Router 2501A**| `Fa0/0` | `172.16.10.2` | `255.255.255.0` | `0.0.0.255` | Area 0 |
+| **Router 2621** | `Gig0/0` | `172.16.10.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
+| **Router 2501A**| `Gig0/0` | `172.16.10.2` | `255.255.255.0` | `0.0.0.255` | Area 0 |
 | | `Se0/0/0` | `172.16.20.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
 | **Router 2501B**| `Se0/0/0` | `172.16.20.2` | `255.255.255.0` | `0.0.0.255` | Area 0 |
-| | `Fa0/0` | `172.16.30.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
+| | `Gig0/0` | `172.16.30.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
 | | `Se0/0/1` | `172.16.40.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
 | **Router 2501C**| `Se0/0/0` | `172.16.40.2` | `255.255.255.0` | `0.0.0.255` | Area 0 |
-| | `Fa0/0` | `172.16.50.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
+| | `Gig0/0` | `172.16.50.1` | `255.255.255.0` | `0.0.0.255` | Area 0 |
 | **PC-1** | `Fa0` | `172.16.10.10` | `255.255.255.0` | N/A | GW: 172.16.10.1 |
 | **PC-2** | `Fa0` | `172.16.30.10` | `255.255.255.0` | N/A | GW: 172.16.30.1 |
 | **PC-3** | `Fa0` | `172.16.50.10` | `255.255.255.0` | N/A | GW: 172.16.50.1 |
@@ -107,7 +107,7 @@ Each router then executes **Dijkstra's Shortest Path First (SPF) algorithm** usi
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2621
-R_2621(config)# interface FastEthernet0/0
+R_2621(config)# interface GigabitEthernet0/0
 R_2621(config-if)# ip address 172.16.10.1 255.255.255.0
 R_2621(config-if)# no shutdown
 R_2621(config-if)# exit
@@ -123,7 +123,7 @@ R_2621# copy running-config startup-config
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2501A
-R_2501A(config)# interface FastEthernet0/0
+R_2501A(config)# interface GigabitEthernet0/0
 R_2501A(config-if)# ip address 172.16.10.2 255.255.255.0
 R_2501A(config-if)# no shutdown
 R_2501A(config-if)# exit
@@ -149,7 +149,7 @@ R_2501B(config)# interface Serial0/0/0
 R_2501B(config-if)# ip address 172.16.20.2 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
-R_2501B(config)# interface FastEthernet0/0
+R_2501B(config)# interface GigabitEthernet0/0
 R_2501B(config-if)# ip address 172.16.30.1 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
@@ -163,7 +163,7 @@ R_2501B(config-router)# router-id 3.3.3.3
 R_2501B(config-router)# network 172.16.20.0 0.0.0.255 area 0
 R_2501B(config-router)# network 172.16.30.0 0.0.0.255 area 0
 R_2501B(config-router)# network 172.16.40.0 0.0.0.255 area 0
-R_2501B(config-router)# passive-interface FastEthernet0/0
+R_2501B(config-router)# passive-interface GigabitEthernet0/0
 R_2501B(config-router)# end
 R_2501B# copy running-config startup-config
 ```
@@ -177,7 +177,7 @@ R_2501C(config)# interface Serial0/0/0
 R_2501C(config-if)# ip address 172.16.40.2 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
-R_2501C(config)# interface FastEthernet0/0
+R_2501C(config)# interface GigabitEthernet0/0
 R_2501C(config-if)# ip address 172.16.50.1 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
@@ -185,7 +185,7 @@ R_2501C(config)# router ospf 1
 R_2501C(config-router)# router-id 4.4.4.4
 R_2501C(config-router)# network 172.16.40.0 0.0.0.255 area 0
 R_2501C(config-router)# network 172.16.50.0 0.0.0.255 area 0
-R_2501C(config-router)# passive-interface FastEthernet0/0
+R_2501C(config-router)# passive-interface GigabitEthernet0/0
 R_2501C(config-router)# end
 R_2501C# copy running-config startup-config
 ```

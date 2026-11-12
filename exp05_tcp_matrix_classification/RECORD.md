@@ -156,84 +156,25 @@ gcc -Wall -Wextra -O2 client.c -o client
 
 ### Client Console:
 ```text
-=====================================================
-     TCP MATRIX CLASSIFICATION CLIENT - EXPERIMENT 5 
-=====================================================
-[INFO] Connecting to Server at 127.0.0.1:8080...
-[INFO] Connected successfully.
+Enter order of matrix N: 3
 
-Enter order of the square matrix N (1 to 50, or 0 to Exit): 3
+Generated Matrix (3x3):
+  14  22   9
+  45  31  12
+   8  50  37
 
-Select Matrix Generation Mode:
-  1. General Random Matrix [1 to 50] (Syllabus standard)
-  2. Test Preset: Upper Triangular Matrix
-  3. Test Preset: Lower Triangular Matrix
-  4. Test Preset: Diagonal Matrix
-  5. Manual Entry (Input elements one-by-one)
-Enter choice (1-5, default 1): 2
-
---- Generated 3 x 3 Matrix ---
-   [  24  17  42 ]
-   [   0  35  11 ]
-   [   0   0   9 ]
---------------------------------
-=====================================================
-SERVER CLASSIFICATION RESULT:
->>> Upper Triangular Matrix (all elements below main diagonal are 0) <<<
-=====================================================
-
-Test another matrix? (1 = Yes, 0 = No / Exit): 1
-
-Enter order of the square matrix N (1 to 50, or 0 to Exit): 3
-
-Select Matrix Generation Mode:
-  1. General Random Matrix [1 to 50] (Syllabus standard)
-  2. Test Preset: Upper Triangular Matrix
-  3. Test Preset: Lower Triangular Matrix
-  4. Test Preset: Diagonal Matrix
-  5. Manual Entry (Input elements one-by-one)
-Enter choice (1-5, default 1): 4
-
---- Generated 3 x 3 Matrix ---
-   [  12   0   0 ]
-   [   0  45   0 ]
-   [   0   0  28 ]
---------------------------------
-=====================================================
-SERVER CLASSIFICATION RESULT:
->>> Diagonal Matrix (all non-diagonal elements are 0) <<<
-=====================================================
-
-Test another matrix? (1 = Yes, 0 = No / Exit): 0
-
-[INFO] Closing client session. Goodbye!
+Server Result: General Matrix
 ```
 
 ### Server Console:
 ```text
-=====================================================
-   TCP MATRIX CLASSIFICATION SERVER (Port: 8080)       
-=====================================================
-[INFO] Server is listening for incoming client connections...
-
-[CONNECTED] Client connected from 127.0.0.1:41200
-
-[INFO] Received request for matrix order N = 3
-[INFO] Matrix elements received:
-   |  24  17  42 |
-   |   0  35  11 |
-   |   0   0   9 |
-[INFO] Classification: Upper Triangular Matrix (all elements below main diagonal are 0)
-
-[INFO] Received request for matrix order N = 3
-[INFO] Matrix elements received:
-   |  12   0   0 |
-   |   0  45   0 |
-   |   0   0  28 |
-[INFO] Classification: Diagonal Matrix (all non-diagonal elements are 0)
-
-[DISCONNECTED] Client 127.0.0.1:41200 disconnected.
+Matrix Server listening on port 8080...
+Client connected.
+Received matrix order N = 3
+Identified: General Matrix
 ```
+
+
 
 ---
 

@@ -14,7 +14,7 @@ To design and implement an IP addressing and subnetting scheme for a Class B cam
 ## 2. HARDWARE AND SOFTWARE REQUIREMENTS
 1. **Simulation Software:** Cisco Packet Tracer (v8.x or above)
 2. **Devices Simulated:**
-   - 2 × Cisco 2811 Routers with WIC-2T serial modules
+   - 2 × Cisco 2811 Routers with HWIC-2T serial modules
    - 2 × Cisco Catalyst 2960 Switches
    - 1 × CCF Student Workstation (PC-PT)
    - 1 × Hackathon Server (Server-PT running HTTP, FTP, and ICMP services)
@@ -59,7 +59,7 @@ Extended ACLs (numbered 100–199 and 2000–2699) allow fine-grained packet ins
 4. Application port numbers (e.g., `eq 80` for HTTP, `eq 443` for HTTPS, `eq 21` for FTP)
 
 ### 3.3 Extended ACL Placement Rule
-Unlike Standard ACLs which are placed near the destination, **Extended ACLs must be placed as close to the source as possible** (inbound on Router-CCF's `FastEthernet0/0`). This discards prohibited traffic before it traverses WAN serial links, conserving network bandwidth and reducing transit router processing overhead.
+Unlike Standard ACLs which are placed near the destination, **Extended ACLs must be placed as close to the source as possible** (inbound on Router-CCF's `GigabitEthernet0/0`). This discards prohibited traffic before it traverses WAN serial links, conserving network bandwidth and reducing transit router processing overhead.
 
 ---
 
@@ -72,11 +72,11 @@ Unlike Standard ACLs which are placed near the destination, **Extended ACLs must
                 |                                                                  |
            [Switch CCF]                                                       [Switch CSE]
                 |                                                                  |
-            Fa0/0: .1                                                          Fa0/0: .1
+            Gig0/0: .1                                                          Gig0/0: .1
        [ Router-CCF (R1) ] ============================================== [ Router-CSE (R2) ]
         Se0/0/0: 10.0.0.1                  WAN Serial Link                 Se0/0/0: 10.0.0.2
        [ APPLY EXTENDED ACL 101 ]           (10.0.0.0/30)
-          (Inbound on Fa0/0)
+          (Inbound on Gig0/0)
 ```
 
 ---
@@ -87,10 +87,10 @@ Unlike Standard ACLs which are placed near the destination, **Extended ACLs must
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **CCF PC** | `Fa0` | `140.80.32.10` | `255.255.248.0` | `140.80.32.1` | CCF Student Workstation |
 | **Hackathon Server**| `Fa0` | `140.80.128.7` | `255.255.248.0` | `140.80.128.1` | HTTP (80), FTP (21), ICMP |
-| **Router-CCF** | `Fa0/0` | `140.80.32.1` | `255.255.248.0` | N/A | Gateway (ACL 101 Inbound) |
+| **Router-CCF** | `Gig0/0` | `140.80.32.1` | `255.255.248.0` | N/A | Gateway (ACL 101 Inbound) |
 | | `Se0/0/0` | `10.0.0.1` | `255.255.255.252`| N/A | WAN Serial DCE (Clock 64000) |
 | **Router-CSE** | `Se0/0/0` | `10.0.0.2` | `255.255.255.252`| N/A | WAN Serial DTE |
-| | `Fa0/0` | `140.80.128.1` | `255.255.248.0` | N/A | CSE Gateway |
+| | `Gig0/0` | `140.80.128.1` | `255.255.248.0` | N/A | CSE Gateway |
 
 ---
 
@@ -105,7 +105,7 @@ Unlike Standard ACLs which are placed near the destination, **Extended ACLs must
    - Statement 2: `access-list 101 deny tcp 140.80.32.0 0.0.7.255 host 140.80.128.7 eq 443`
    - Statement 3: `access-list 101 permit ip any any`
 6. Apply ACL 101 inbound on Router-CCF's CCF-facing interface:
-   - `interface FastEthernet0/0`
+   - `interface GigabitEthernet0/0`
    - `ip access-group 101 in`
 7. Perform the verification checks:
    - Web browser test to `http://140.80.128.7` from CCF Student PC: Must timeout / fail.
@@ -124,7 +124,7 @@ Router# configure terminal
 Router(config)# hostname Router-CCF
 
 ! Interface IP Setup
-Router-CCF(config)# interface FastEthernet0/0
+Router-CCF(config)# interface GigabitEthernet0/0
 Router-CCF(config-if)# ip address 140.80.32.1 255.255.248.0
 Router-CCF(config-if)# no shutdown
 Router-CCF(config-if)# exit
@@ -148,7 +148,7 @@ Router-CCF(config)# access-list 101 deny tcp 140.80.32.0 0.0.7.255 host 140.80.1
 Router-CCF(config)# access-list 101 permit ip any any
 
 ! Apply ACL 101 Inbound on CCF LAN Interface
-Router-CCF(config)# interface FastEthernet0/0
+Router-CCF(config)# interface GigabitEthernet0/0
 Router-CCF(config-if)# ip access-group 101 in
 Router-CCF(config-if)# end
 Router-CCF# copy running-config startup-config
@@ -165,7 +165,7 @@ Router-CSE(config-if)# ip address 10.0.0.2 255.255.255.252
 Router-CSE(config-if)# no shutdown
 Router-CSE(config-if)# exit
 
-Router-CSE(config)# interface FastEthernet0/0
+Router-CSE(config)# interface GigabitEthernet0/0
 Router-CSE(config-if)# ip address 140.80.128.1 255.255.248.0
 Router-CSE(config-if)# no shutdown
 Router-CSE(config-if)# exit

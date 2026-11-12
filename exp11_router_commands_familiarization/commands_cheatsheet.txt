@@ -1,5 +1,6 @@
 ================================================================================
 EXPERIMENT 11: FAMILIARIZING ROUTER COMMANDS - CLI CHEAT SHEET
+Target Hardware: Cisco 1941 / 2911 with HWIC-2T (Current Packet Tracer Standard)
 ================================================================================
 
 1. ROUTER MODES:
@@ -16,12 +17,12 @@ Router# show version                   ! View OS version, hardware model, uptime
 Router# show ip protocols              ! View active routing protocols
 Router# show ip route                  ! Display routing table
 Router# show ip interface brief        ! Table of all interfaces, IPs, status, protocol
-Router# show interfaces FastEthernet0/0! Detailed Layer 1/2 statistics for interface
+Router# show interfaces GigabitEthernet0/0 ! Detailed Layer 1/2 statistics (or FastEthernet0/0 on 2811)
 Router# show controllers serial 0/0/0  ! Check DTE vs DCE controller and clock rate
 Router# show history                   ! View circular command history buffer
 Router# terminal history size 50       ! Increase history buffer size
 Router# show clock                     ! View software clock
-Router# clock set 10:30:00 11 Oct 2026 ! Set software clock
+Router# clock set 10:30:00 25 Oct 2026 ! Set software clock
 Router# show hosts                     ! View DNS cache and static host entries
 
 3. SAVING CONFIGURATIONS:
@@ -31,14 +32,18 @@ Router# write memory                        ! Short equivalent
 
 4. CONFIGURING ETHERNET & SERIAL INTERFACES:
 --------------------------------------------
-! Router 1 (DCE Side)
+! Router 1 (DCE Side - Cisco 1941 + HWIC-2T)
 Router> enable
 Router# configure terminal
 Router(config)# hostname Router1
-Router1(config)# interface FastEthernet0/0
+
+! Onboard Gigabit LAN Interface (use GigabitEthernet0/0 on 1941/2911; Fa0/0 on 2811)
+Router1(config)# interface GigabitEthernet0/0
 Router1(config-if)# ip address 172.16.10.1 255.255.255.0
 Router1(config-if)# no shutdown
 Router1(config-if)# exit
+
+! HWIC-2T Modular Serial Interface (DCE: requires clock rate)
 Router1(config)# interface Serial0/0/0
 Router1(config-if)# ip address 172.16.20.1 255.255.255.0
 Router1(config-if)# clock rate 64000
@@ -46,7 +51,7 @@ Router1(config-if)# no shutdown
 Router1(config-if)# end
 Router1# copy running-config startup-config
 
-! Router 2 (DTE Side)
+! Router 2 (DTE Side - Cisco 1941 + HWIC-2T)
 Router> enable
 Router# configure terminal
 Router(config)# hostname Router2

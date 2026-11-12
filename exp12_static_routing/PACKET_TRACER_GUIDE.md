@@ -16,6 +16,19 @@ According to the KTU PCCSL507 syllabus:
 
 ## 2. NETWORK TOPOLOGY (FIGURE 1 FROM SYLLABUS)
 
+> [!IMPORTANT]
+> ### Modern Packet Tracer Hardware Selection (PT 8.x / 7.x & CCNA Standards)
+> The legacy router models shown in the university syllabus diagram (`Cisco 2621` and `Cisco 2501`) are discontinued and **not available** in modern Cisco Packet Tracer versions.
+> Across engineering universities (KTU, VTU, Anna Univ) and CCNAv7 curricula, the following modern devices and interface mappings are standard:
+> 1. **Primary Modern Router**: Select **Cisco 1941 (ISR G2)** or **Cisco 2911** from the bottom router shelf.
+> 2. **Serial WAN Module**: Install the **`HWIC-2T`** (High-Speed WAN Interface Card) in **Slot 0** (Power OFF router in *Physical* tab -> drag `HWIC-2T` to Slot 0 -> Power ON).
+> 3. **Interface Names**:
+>    - **LAN Ethernet**: **`GigabitEthernet 0/0` (`g0/0`)** replaces legacy `FastEthernet 0/0`.
+>    - **Serial WAN**: **`Serial 0/0/0` (`s0/0/0`)** and **`Serial 0/0/1` (`s0/0/1`)**.
+> 4. **Alternative Generic Option**: You may also use the **Router-PT (Generic)** with `PT-ROUTER-NM-1FFE` and `PT-ROUTER-NM-1SS`.
+> *(If your college lab computers run legacy 2811 routers, simply use `FastEthernet 0/0` instead of `GigabitEthernet 0/0`).*
+
+
 Figure 1 depicts an enterprise multi-router backbone consisting of 4 routers interconnected across serial links and Ethernet segments. All interfaces use a `/24` subnet mask (`255.255.255.0`).
 
 ### Topology Diagram (ASCII)
@@ -23,9 +36,9 @@ Figure 1 depicts an enterprise multi-router backbone consisting of 4 routers int
   [172.16.10.0/24]                [172.16.20.0/24]                 [172.16.40.0/24]              [172.16.50.0/24]
        Ethernet                     Serial WAN                       Serial WAN                      Ethernet
  [Router 2621] ============ [Router 2501A] ----------------- [Router 2501B] ----------------- [Router 2501C] === [PC-3]
-   Fa0/0: .1                 Fa0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Fa0/0: .1    .10
+   Gig0/0: .1                 Gig0/0: .2  Se0/0/0: .1      Se0/0/0: .2  Se0/0/1: .1     Se0/0/0: .2  Gig0/0: .1    .10
        |                                                    |                                           
-     [PC-1]                                               Fa0/0: .1                                     
+     [PC-1]                                               Gig0/0: .1                                     
       .10                                                   |                                           
                                                           [PC-2] .10                                    
                                                      [172.16.30.0/24] LAN                               
@@ -34,27 +47,44 @@ Figure 1 depicts an enterprise multi-router backbone consisting of 4 routers int
 ### Mermaid Diagram
 ```mermaid
 graph LR
-    subgraph NET1 ["Subnet 172.16.10.0/24"]
-        PC1["PC-1\n172.16.10.10"] --- R2621["Router 2621\nFa0/0: 172.16.10.1"]
+    %% Subnets
+    subgraph NET1 ["LAN 1: 172.16.10.0/24"]
+        direction TB
+        PC1["PC-1<br/>172.16.10.10/24<br/>GW: 172.16.10.1"]
     end
 
-    R2621 ===|Ethernet / FastEthernet| R2501A["Router 2501A\nFa0/0: 172.16.10.2\nSe0/0/0: 172.16.20.1 (DCE)"]
-
-    subgraph WAN1 ["Subnet 172.16.20.0/24 (Serial)"]
-        R2501A ---|Serial DCE/DTE 64kbps| R2501B["Router 2501B\nSe0/0/0: 172.16.20.2 (DTE)\nFa0/0: 172.16.30.1\nSe0/0/1: 172.16.40.1 (DCE)"]
+    subgraph ROUTERS ["Routers Infrastructure"]
+        direction LR
+        R2621["Router 2621<br/>Gig0/0: 172.16.10.1/24<br/>Fa0/1: 172.16.12.1/30"]
+        R2501A["Router 2501A<br/>Gig0/0: 172.16.12.2/30<br/>Se0/0/0: 172.16.20.1/30 (DCE)"]
+        R2501B["Router 2501B<br/>Se0/0/0: 172.16.20.2/30 (DTE)<br/>Gig0/0: 172.16.30.1/24<br/>Se0/0/1: 172.16.40.1/30 (DCE)"]
+        R2501C["Router 2501C<br/>Se0/0/0: 172.16.40.2/30 (DTE)<br/>Gig0/0: 172.16.50.1/24"]
     end
 
-    subgraph NET2 ["Subnet 172.16.30.0/24"]
-        R2501B --- PC2["PC-2\n172.16.30.10"]
+    subgraph NET2 ["LAN 2: 172.16.30.0/24"]
+        direction TB
+        PC2["PC-2<br/>172.16.30.10/24<br/>GW: 172.16.30.1"]
     end
 
-    subgraph WAN2 ["Subnet 172.16.40.0/24 (Serial)"]
-        R2501B ---|Serial DCE/DTE 64kbps| R2501C["Router 2501C\nSe0/0/0: 172.16.40.2 (DTE)\nFa0/0: 172.16.50.1"]
+    subgraph NET3 ["LAN 3: 172.16.50.0/24"]
+        direction TB
+        PC3["PC-3<br/>172.16.50.10/24<br/>GW: 172.16.50.1"]
     end
 
-    subgraph NET3 ["Subnet 172.16.50.0/24"]
-        R2501C --- PC3["PC-3\n172.16.50.10"]
-    end
+    %% Connections
+    PC1 ---|Fa0 to Gig0/0 Straight-Through| R2621
+    R2621 ---|FastEthernet Cross-Over| R2501A
+    R2501A ---|WAN1: 172.16.20.0/30 Serial DCE 64k| R2501B
+    R2501B ---|Gig0/0 to Fa0 Straight-Through| PC2
+    R2501B ---|WAN2: 172.16.40.0/30 Serial DCE 64k| R2501C
+    R2501C ---|Gig0/0 to Fa0 Straight-Through| PC3
+
+    %% Node Styling
+    classDef device fill:#1e293b,stroke:#3b82f6,stroke-width:2px,color:#f8fafc;
+    classDef host fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+
+    class R2621,R2501A,R2501B,R2501C device;
+    class PC1,PC2,PC3 host;
 ```
 
 ---
@@ -63,14 +93,14 @@ graph LR
 
 | Device Name | Interface | IP Address | Subnet Mask | Default Gateway | Connection / Description |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Router 2621** | `Fa0/0` | `172.16.10.1` | `255.255.255.0` | N/A | Connects to 2501A & LAN 10 |
-| **Router 2501A**| `Fa0/0` | `172.16.10.2` | `255.255.255.0` | N/A | Connects to 2621 |
+| **Router 2621** | `Gig0/0` | `172.16.10.1` | `255.255.255.0` | N/A | Connects to 2501A & LAN 10 |
+| **Router 2501A**| `Gig0/0` | `172.16.10.2` | `255.255.255.0` | N/A | Connects to 2621 |
 | | `Se0/0/0` | `172.16.20.1` | `255.255.255.0` | N/A | Serial DCE to 2501B (Clock 64000) |
 | **Router 2501B**| `Se0/0/0` | `172.16.20.2` | `255.255.255.0` | N/A | Serial DTE from 2501A |
-| | `Fa0/0` | `172.16.30.1` | `255.255.255.0` | N/A | Local LAN (172.16.30.0/24) |
+| | `Gig0/0` | `172.16.30.1` | `255.255.255.0` | N/A | Local LAN (172.16.30.0/24) |
 | | `Se0/0/1` | `172.16.40.1` | `255.255.255.0` | N/A | Serial DCE to 2501C (Clock 64000) |
 | **Router 2501C**| `Se0/0/0` | `172.16.40.2` | `255.255.255.0` | N/A | Serial DTE from 2501B |
-| | `Fa0/0` | `172.16.50.1` | `255.255.255.0` | N/A | Local LAN (172.16.50.0/24) |
+| | `Gig0/0` | `172.16.50.1` | `255.255.255.0` | N/A | Local LAN (172.16.50.0/24) |
 | **PC-1** | `Fa0` | `172.16.10.10`| `255.255.255.0` | `172.16.10.1` | Workstation on Subnet 10 |
 | **PC-2** | `Fa0` | `172.16.30.10`| `255.255.255.0` | `172.16.30.1` | Workstation on Subnet 30 |
 | **PC-3** | `Fa0` | `172.16.50.10`| `255.255.255.0` | `172.16.50.1` | Workstation on Subnet 50 |
@@ -87,10 +117,10 @@ graph LR
    - Drag 3 × **PC-PT** (`PC-1`, `PC-2`, `PC-3`).
 3. (Optional) Drag a **Switch 2960** between Router 2621, 2501A, and PC-1 to connect them to the shared `172.16.10.0/24` collision domain.
 
-### Step 4.2: Installing Serial WIC-2T Modules
+### Step 4.2: Installing Serial HWIC-2T Modules
 1. On **2501A**, **2501B**, and **2501C**:
    - Click the router $\rightarrow$ **Physical** tab $\rightarrow$ toggle Power switch to **OFF**.
-   - Drag the **WIC-2T** module into `Slot 0`.
+   - Drag the **HWIC-2T** module into `Slot 0`.
    - Toggle Power switch to **ON**.
 
 ### Step 4.3: Wiring the Network
@@ -107,7 +137,7 @@ graph LR
 Router> enable
 Router# configure terminal
 Router(config)# hostname R_2621
-R_2621(config)# interface FastEthernet0/0
+R_2621(config)# interface GigabitEthernet0/0
 R_2621(config-if)# ip address 172.16.10.1 255.255.255.0
 R_2621(config-if)# no shutdown
 R_2621(config-if)# exit
@@ -129,7 +159,7 @@ Router# configure terminal
 Router(config)# hostname R_2501A
 
 ! Ethernet interface to 2621
-R_2501A(config)# interface FastEthernet0/0
+R_2501A(config)# interface GigabitEthernet0/0
 R_2501A(config-if)# ip address 172.16.10.2 255.255.255.0
 R_2501A(config-if)# no shutdown
 R_2501A(config-if)# exit
@@ -162,7 +192,7 @@ R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
 
 ! Ethernet interface (Local LAN 172.16.30.0)
-R_2501B(config)# interface FastEthernet0/0
+R_2501B(config)# interface GigabitEthernet0/0
 R_2501B(config-if)# ip address 172.16.30.1 255.255.255.0
 R_2501B(config-if)# no shutdown
 R_2501B(config-if)# exit
@@ -197,7 +227,7 @@ R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
 
 ! Ethernet interface (Local LAN 172.16.50.0)
-R_2501C(config)# interface FastEthernet0/0
+R_2501C(config)# interface GigabitEthernet0/0
 R_2501C(config-if)# ip address 172.16.50.1 255.255.255.0
 R_2501C(config-if)# no shutdown
 R_2501C(config-if)# exit
@@ -227,7 +257,7 @@ Gateway of last resort is not set
 
 S    172.16.10.0/24 [1/0] via 172.16.20.1
 C    172.16.20.0/24 is directly connected, Serial0/0/0
-C    172.16.30.0/24 is directly connected, FastEthernet0/0
+C    172.16.30.0/24 is directly connected, GigabitEthernet0/0
 C    172.16.40.0/24 is directly connected, Serial0/0/1
 S    172.16.50.0/24 [1/0] via 172.16.40.2
 ```

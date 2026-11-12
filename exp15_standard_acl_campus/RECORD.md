@@ -14,7 +14,7 @@ To implement traffic filtering on a college campus network (Figure 2 in syllabus
 ## 2. HARDWARE AND SOFTWARE REQUIREMENTS
 1. **Simulation Environment:** Cisco Packet Tracer (v8.x or above)
 2. **Devices Simulated:**
-   - 3 × Cisco Routers (2811 series) with WIC-2T serial modules
+   - 3 × Cisco Routers (Cisco 1941 / 2911 ISR series; or Router-PT / 2811) equipped with HHWIC-2T serial modules
    - 3 × Cisco Catalyst 2960 Switches
    - 4 × End-user PCs (Host_A, Host_B, Lab_B, Lab_C)
    - Cabling: Copper Straight-Through cables, Serial DCE/DTE cables
@@ -57,11 +57,11 @@ Because standard ACLs can only filter based on the source IP and cannot distingu
                  |                                   |                                  \          /
              [Switch 1]                          [Switch 2]                               [Switch 3]
                  |                                   |                                        |
-              Fa0/0: .1                           Fa0/0: .1                                Fa0/0: .1
+              Gig0/0: .1                           Gig0/0: .1                                Gig0/0: .1
            [Router-A (R1)] ================== [Router-B (R2)] ======================= [Router-C (R3)]
             Se0/0/0: .1     Serial 172.16.20.0/24 Se0/0/0: .2  Se0/0/1: .1  Serial 172.16.40.0/24  Se0/0/0: .2
           [APPLY ACL 10 HERE]
-          (Outbound on Fa0/0)
+          (Outbound on Gig0/0)
 ```
 
 ---
@@ -74,13 +74,13 @@ Because standard ACLs can only filter based on the source IP and cannot distingu
 | **Host_B** | `FastEthernet0` | `172.16.30.2` | `255.255.255.0` | `172.16.30.1` | Authorized Campus Host |
 | **Lab_B** | `FastEthernet0` | `172.16.50.10` | `255.255.255.0` | `172.16.50.1` | Blocked Student Host 1 |
 | **Lab_C** | `FastEthernet0` | `172.16.50.20` | `255.255.255.0` | `172.16.50.1` | Blocked Student Host 2 |
-| **Router-A** | `Fa0/0` | `172.16.10.1` | `255.255.255.0` | N/A | Gateway (ACL 10 Outbound) |
+| **Router-A** | `Gig0/0` | `172.16.10.1` | `255.255.255.0` | N/A | Gateway (ACL 10 Outbound) |
 | | `Se0/0/0` | `172.16.20.1` | `255.255.255.0` | N/A | Serial DCE (Clock 64000) |
 | **Router-B** | `Se0/0/0` | `172.16.20.2` | `255.255.255.0` | N/A | Serial DTE from Router-A |
-| | `Fa0/0` | `172.16.30.1` | `255.255.255.0` | N/A | Gateway to Host_B |
+| | `Gig0/0` | `172.16.30.1` | `255.255.255.0` | N/A | Gateway to Host_B |
 | | `Se0/0/1` | `172.16.40.1` | `255.255.255.0` | N/A | Serial DCE (Clock 64000) |
 | **Router-C** | `Se0/0/0` | `172.16.40.2` | `255.255.255.0` | N/A | Serial DTE from Router-B |
-| | `Fa0/0` | `172.16.50.1` | `255.255.255.0` | N/A | Gateway to Lab_B/C |
+| | `Gig0/0` | `172.16.50.1` | `255.255.255.0` | N/A | Gateway to Lab_B/C |
 
 ---
 
@@ -94,7 +94,7 @@ Because standard ACLs can only filter based on the source IP and cannot distingu
    - `access-list 10 permit host 172.16.30.2`
    - `access-list 10 deny any`
 6. Apply the access list outbound on Router-A's LAN interface towards the protected subnet:
-   - `interface FastEthernet0/0`
+   - `interface GigabitEthernet0/0`
    - `ip access-group 10 out`
 7. Perform the verification checks required by the syllabus:
    - Check (a): Ping Host_A (`172.16.10.10`) from Host_B (`172.16.30.2`) — Must SUCCEED.
@@ -111,7 +111,7 @@ Because standard ACLs can only filter based on the source IP and cannot distingu
 Router> enable
 Router# configure terminal
 Router(config)# hostname Router-A
-Router-A(config)# interface FastEthernet0/0
+Router-A(config)# interface GigabitEthernet0/0
 Router-A(config-if)# ip address 172.16.10.1 255.255.255.0
 Router-A(config-if)# no shutdown
 Router-A(config-if)# exit
@@ -132,8 +132,8 @@ Router-A(config)# access-list 10 remark Allow only Host_B to communicate with 17
 Router-A(config)# access-list 10 permit host 172.16.30.2
 Router-A(config)# access-list 10 deny any
 
-! Apply ACL Outbound on Fa0/0 towards Host_A
-Router-A(config)# interface FastEthernet0/0
+! Apply ACL Outbound on Gig0/0 towards Host_A
+Router-A(config)# interface GigabitEthernet0/0
 Router-A(config-if)# ip access-group 10 out
 Router-A(config-if)# end
 Router-A# copy running-config startup-config
@@ -148,7 +148,7 @@ Router-B(config)# interface Serial0/0/0
 Router-B(config-if)# ip address 172.16.20.2 255.255.255.0
 Router-B(config-if)# no shutdown
 Router-B(config-if)# exit
-Router-B(config)# interface FastEthernet0/0
+Router-B(config)# interface GigabitEthernet0/0
 Router-B(config-if)# ip address 172.16.30.1 255.255.255.0
 Router-B(config-if)# no shutdown
 Router-B(config-if)# exit
@@ -174,7 +174,7 @@ Router-C(config)# interface Serial0/0/0
 Router-C(config-if)# ip address 172.16.40.2 255.255.255.0
 Router-C(config-if)# no shutdown
 Router-C(config-if)# exit
-Router-C(config)# interface FastEthernet0/0
+Router-C(config)# interface GigabitEthernet0/0
 Router-C(config-if)# ip address 172.16.50.1 255.255.255.0
 Router-C(config-if)# no shutdown
 Router-C(config-if)# exit
