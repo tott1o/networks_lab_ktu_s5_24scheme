@@ -1,0 +1,17 @@
+=============================================================
+             KTU PCCSL507 NETWORKS LAB EXPERIMENT 9
+                 CONCURRENT FILE SERVER TEST FILE
+=============================================================
+This is a sample text file hosted on the concurrent TCP server.
+When requested by a client, the server:
+1. Spawns a child process using fork().
+2. Obtains its unique Child Process ID (PID) via getpid().
+3. Sends its PID to the client.
+4. Streams the contents of this file over the TCP socket.
+
+Experiment Objectives Met:
+- Concurrent client handling via multi-processing (fork)
+- Stream-based TCP socket communication
+- File I/O and graceful error handling
+- Transmission of Server Process ID (PID)
+=============================================================
