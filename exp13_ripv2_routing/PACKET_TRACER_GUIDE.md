@@ -301,6 +301,4 @@ Ping statistics for 172.16.50.10:
 
 | Video Title | Channel / Creator | Direct YouTube Link | Key Takeaways |
 | :--- | :--- | :--- | :--- |
-| **Day 25: RIP & EIGRP (CCNA 200-301)** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Distance vector theory, hop counts, `network` statement classful syntax. |
-| **Configuring RIPv2 in Cisco Packet Tracer** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=kYJzXv-i2_E) | Complete lab walk-through, `version 2`, `no auto-summary`, ping test. |
-| **RIPv2 Routing Protocol Deep Dive** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Split horizon, poison reverse, why multicast `224.0.0.9` is superior to broadcast. |
+| **Cisco CCNA Packet Tracer Ultimate Labs: RIP Routing Lab** | David Bombal | [Watch on YouTube](https://www.youtube.com/watch?v=qN4y7Y8Qrrc) | Distance-vector routing fundamentals, configuring `version 2`, `no auto-summary`, and verifying routing tables (`show ip route rip`). |

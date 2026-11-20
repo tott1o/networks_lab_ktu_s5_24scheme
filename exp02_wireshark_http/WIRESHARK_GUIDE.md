@@ -246,8 +246,7 @@ When viewing the packets in Wireshark, the screen displays three distinct panes:
 
 | Video Title | Channel / Creator | Direct YouTube Link | What You Learn |
 | :--- | :--- | :--- | :--- |
-| **NW LAB 17: HTTP Packet Analysis in Wireshark (Demo)** | GoLearnerz (KTU Networks Lab) | [Watch on YouTube](https://www.youtube.com/watch?v=XJTOE3Q3_7c) | **Direct KTU Syllabus Demo.** Live demonstration of this exact experiment, capturing GET/response packets and inspecting headers. |
+| **DCCN Lab 4: HTTP Packet Analysis on Wireshark** | Tech Tutorials | [Watch on YouTube](https://www.youtube.com/watch?v=BkRexNrwWxI) | Laboratory demonstration showing browser cache clearing, filtering `http`, and inspecting response codes. |
 | **2.2 The Web and HTTP (part 1)** | Prof. Jim Kurose | [Watch on YouTube](https://www.youtube.com/watch?v=S9GEPaQ1lFs) | **Textbook Author Lecture.** Explains HTTP client-server interaction, GET request format, response codes, and header structures. |
 | **Learn Wireshark! Tutorial for BEGINNERS** | Chris Greer (Packet Pioneer) | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Interface selection, starting/stopping captures, applying display filters, and inspecting packet details tree. |
-| **DCCN Lab 4: HTTP Packet Analysis on Wireshark** | Tech Tutorials | [Watch on YouTube](https://www.youtube.com/watch?v=BkRexNrwWxI) | Laboratory demonstration showing browser cache clearing, filtering `http`, and inspecting response codes. |
 | **Official Kurose & Ross Lab Materials** | Jim Kurose / Keith Ross | [Official Lab Site](http://gaia.cs.umass.edu/kurose_ross/wireshark.php) | Official assignment documentation and trace files. |

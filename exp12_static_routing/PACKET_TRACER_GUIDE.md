@@ -301,4 +301,5 @@ Trace complete.
 
 | Video Title | Channel / Creator | Direct YouTube Link | Key Takeaways |
 | :--- | :--- | :--- | :--- |
-| **How to Configure Static Routes in Cisco Packet Tracer** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Intuitive explanation of why routers need forward and reverse routing entries. |
+| **Free CCNA | Static Routing | Day 11 (part 2)** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=YCv4-_sMvYE) | Comprehensive explanation of static routes, recursive lookups, next-hop IP vs exit interface, and administrative distance. |
+| **Free CCNA | Configuring Static Routes | Day 11 Lab** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=XHxOtIav2k8) | Step-by-step Cisco Packet Tracer configuration lab for static routing and troubleshooting connectivity. |

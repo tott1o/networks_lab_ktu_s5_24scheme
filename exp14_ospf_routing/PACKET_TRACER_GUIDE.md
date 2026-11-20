@@ -264,6 +264,5 @@ Ping statistics for 172.16.50.10:
 
 | Video Title | Channel / Creator | Direct YouTube Link | Key Takeaways |
 | :--- | :--- | :--- | :--- |
-| **FREE CCNA Lab 054: OSPF Single Area** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | OSPF configuration, wildcard masks, router ID selection, cost metric calculation. |
-| **Cisco Packet Tracer: Single Area OSPF Configuration** | Keith Barker (CBT Nuggets) | [Watch on YouTube](https://www.youtube.com/watch?v=kYJzXv-i2_E) | Inspecting `show ip ospf neighbor`, adjacency states, verifying routing table. |
-| **OSPF Explained Step by Step** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Link-state vs distance-vector, LSDB synchronization, Dijkstra's algorithm. |
+| **Free CCNA | OSPF Part 1 | Day 26** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=pvuaoJ9YzoI) | Link-state routing concepts, OSPF Area 0, router ID selection, and OSPF metric / reference bandwidth. |
+| **Free CCNA | Configuring OSPF (1) | Day 26 Lab** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=LeLRWjfylcs) | Practical Cisco Packet Tracer lab configuring single-area OSPF, network commands with wildcard masks, and verifying neighbor adjacencies. |

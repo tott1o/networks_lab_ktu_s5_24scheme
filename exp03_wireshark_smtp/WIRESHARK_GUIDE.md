@@ -248,7 +248,6 @@ sequenceDiagram
 
 | Video Title | Channel / Creator | Direct YouTube Link | What You Learn |
 | :--- | :--- | :--- | :--- |
-| **NW LAB 18: SMTP Packet Analysis in Wireshark (Demo)** | GoLearnerz (KTU Networks Lab) | [Watch on YouTube](https://www.youtube.com/watch?v=D2zxmyv5wRU) | **Direct KTU Syllabus Demo.** Shows capturing SMTP packets, command exchanges (`HELO`, `MAIL FROM`, `RCPT TO`, `DATA`), and decoding IMF email packets. |
 | **2.3 Email** | Prof. Jim Kurose | [Watch on YouTube](https://www.youtube.com/watch?v=D3GMrOMR2dk) | **Textbook Author Lecture.** Comprehensive lecture on SMTP, user agents, mail transfer agents, command sequence, and RFC 5322 header formats. |
-| **How To Monitor Emails (SMTP) With Wireshark** | Network Security Channel | [Watch on YouTube](https://www.youtube.com/watch?v=lDI0in5c8o4) | Practical video showing how clear-text SMTP and MIME email payloads are captured and decoded in Wireshark. |
+| **Learn Wireshark! Tutorial for BEGINNERS** | Chris Greer (Packet Pioneer) | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Interface selection, starting/stopping captures, applying display filters, and inspecting TCP/application payloads. |
 | **Official Kurose & Ross Lab Materials** | Jim Kurose / Keith Ross | [Official Lab Site](http://gaia.cs.umass.edu/kurose_ross/wireshark.php) | Pre-captured trace files (`smtp-wireshark-trace1.pcap`) and lab manuals. |

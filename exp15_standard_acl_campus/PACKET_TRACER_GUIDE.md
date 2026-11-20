@@ -269,11 +269,3 @@ Standard IP access list 10
 > **Explanation:** The counter clearly confirms **4 matches** from Host_B's successful ping, and **8 matches** (4 from Lab_B + 4 from Lab_C) filtered and denied by the deny rule!
 
 ---
-
-## 7. 🎥 VERIFIED VIDEO GUIDES & TUTORIALS
-
-| Video Title | Channel / Creator | Direct YouTube Link | Key Concepts |
-| :--- | :--- | :--- | :--- |
-| **Free CCNA | Standard ACLs | Day 34** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=FdX83Q9HCxK) | Standard ACL rules, placement closest to destination, match counters. |
-| **How to Configure Standard ACL in Cisco Packet Tracer** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Step-by-step campus lab, applying `ip access-group out`, testing pings. |
-| **Cisco ACLs: You NEED to know this!** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Implicit deny any, packet filtering order of evaluation, in vs out directions. |

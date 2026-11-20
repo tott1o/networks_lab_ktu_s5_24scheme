@@ -394,3 +394,9 @@ Router2# copy running-config startup-config
 | Packet loss on first ping | Address Resolution Protocol (ARP) resolution latency. | Normal behavior. Subsequent pings will show 100% success rate. |
 
 ---
+
+## 7. 🎥 VERIFIED VIDEO GUIDES & TUTORIALS
+
+| Video Title | Channel / Creator | Direct YouTube Link | Key Concepts |
+| :--- | :--- | :--- | :--- |
+| **Free CCNA | Intro to the CLI | Day 4** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=g34QN5eiEYI) | Cisco IOS command-line navigation, User vs Privileged vs Global Configuration modes, running-config vs startup-config. |

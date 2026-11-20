@@ -338,11 +338,3 @@ Trace complete.
 ```
 
 ---
-
-## 9. 🎥 VERIFIED VIDEO GUIDES & TUTORIALS
-
-| Video Title | Channel / Creator | Direct YouTube Link | Key Concepts |
-| :--- | :--- | :--- | :--- |
-| **Packet Tracer: Configuring RIPng (7.3.2.3)** | CCNA Lab Walkthroughs | [Watch on YouTube](https://www.youtube.com/watch?v=kYJzXv-i2_E) | `ipv6 unicast-routing`, interface-level `ipv6 rip enable`, link-local next-hops. |
-| **IPv6 Routing Protocols - RIPng Tutorial** | CBT Nuggets / Keith Barker | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Multicast `FF02::9`, UDP 521, comparing RIPv2 vs RIPng, examining routing tables. |
-| **IPv6 RIPng Configuration in Cisco Packet Tracer** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Step-by-step multi-router IPv6 setup, configuring PCs with IPv6, ping tests. |

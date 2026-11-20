@@ -283,11 +283,3 @@ Extended IP access list 101
 > **Confirmation:** The counters clearly confirm **6 matches** for blocked HTTP browser connection attempts, while the permit rule logged **28 matches** for ping, ARP, and FTP packets!
 
 ---
-
-## 8. 🎥 VERIFIED VIDEO GUIDES & TUTORIALS
-
-| Video Title | Channel / Creator | Direct YouTube Link | Key Takeaways |
-| :--- | :--- | :--- | :--- |
-| **Extended ACL Lab: CCNA 200-301 (Port Filtering)** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=ESniaVzFYpv) | Source + Destination + Port filtering syntax, `eq www`, placement closest to source. |
-| **Configuring Extended ACL to Block Web Traffic (HTTP/HTTPS)** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Setting up web server, testing browser block vs ping success in Packet Tracer. |
-| **Cisco Extended Access Lists Demystified** | Keith Barker (CBT Nuggets) | [Watch on YouTube](https://www.youtube.com/watch?v=kYJzXv-i2_E) | Wildcard calculation for VLSM subnets, verification using `show access-lists`. |

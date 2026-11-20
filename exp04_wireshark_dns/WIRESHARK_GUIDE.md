@@ -388,8 +388,7 @@ All links below are verified, active, and directly relevant to Wireshark DNS ana
 
 | Video Title | Channel / Creator | Direct YouTube Link | What You Learn |
 | :--- | :--- | :--- | :--- |
-| **NW LAB 19: DNS Packet Analysis in Wireshark (Demo)** | GoLearnerz (KTU Networks Lab) | [Watch on YouTube](https://www.youtube.com/watch?v=97GhdtkIEQk) | **Direct KTU Syllabus Demo.** Live walkthrough performing this exact lab, clearing cache, capturing `ktu.edu.in`, and answering questions (a)–(l). |
-| **2.4 The Domain Name System (DNS)** | Prof. Jim Kurose | [Watch on YouTube](https://www.youtube.com/watch?v=6lRcMh5Yphg) | **Textbook Author Lecture.** Deep dive into DNS hierarchy, message layout, 12-byte header, transaction IDs, and flag fields. |
+| **Your First DNS Lookup—Captured and Explained** | Chris Greer (Packet Pioneer) | [Watch on YouTube](https://www.youtube.com/watch?v=R0b8qWn-x98) | Hands-on Wireshark packet capture analysis of recursive resolution, query/response pairs, transaction IDs, and header flags. |
 | **Learn Wireshark! Tutorial for BEGINNERS** | Chris Greer (Packet Pioneer) | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Fundamental guide on capturing interfaces, applying display filters, and navigating the 3-pane interface. |
 | **Official Kurose & Ross Lab Materials** | Jim Kurose / Keith Ross | [Official Lab Materials](http://gaia.cs.umass.edu/kurose_ross/wireshark.php) | Official Wireshark DNS Lab PDF (`WIRESHARK_DNS_v8.1.pdf`) and trace files. |
 | **NPTEL Computer Networks: DNS** | IIT Kharagpur | [NPTEL Course Link](https://nptel.ac.in/courses/106106091) | Academic lecture on DNS architecture, iterative vs recursive resolution, and root servers. |
