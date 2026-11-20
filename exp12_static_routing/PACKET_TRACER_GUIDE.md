@@ -301,6 +301,4 @@ Trace complete.
 
 | Video Title | Channel / Creator | Direct YouTube Link | Key Takeaways |
 | :--- | :--- | :--- | :--- |
-| **Free CCNA Lab 024: Static Routing (Part 1)** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=4T19U81s4kY) | Next-hop IP vs exit interface, administrative distance, bidirectional return path. |
-| **Static Routing Configuration in Cisco Packet Tracer** | Keith Barker (CBT Nuggets) | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Step-by-step 3-router topology, configuring `ip route`, troubleshooting pings. |
 | **How to Configure Static Routes in Cisco Packet Tracer** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | Intuitive explanation of why routers need forward and reverse routing entries. |
