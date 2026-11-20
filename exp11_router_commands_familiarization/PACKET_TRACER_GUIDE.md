@@ -394,12 +394,3 @@ Router2# copy running-config startup-config
 | Packet loss on first ping | Address Resolution Protocol (ARP) resolution latency. | Normal behavior. Subsequent pings will show 100% success rate. |
 
 ---
-
-## 7. 🎥 VERIFIED VIDEO GUIDES & TUTORIALS
-
-| Video Title | Channel / Creator | Direct YouTube Link | Topics Covered |
-| :--- | :--- | :--- | :--- |
-| **Basic Router Configuration in Cisco Packet Tracer** | Jeremy's IT Lab | [Watch on YouTube](https://www.youtube.com/watch?v=J_7s5E12p3g) | Hostname, modes, interface IPs, saving configs, command history. |
-| **Cisco Packet Tracer Basic Router Configuration** | Keith Barker (CBT Nuggets) | [Watch on YouTube](https://www.youtube.com/watch?v=kYJzXv-i2_E) | CLI modes, interface assignment, `show ip interface brief`. |
-| **Connecting Two Routers via Serial Cable in Packet Tracer** | Tech Academia | [Watch on YouTube](https://www.youtube.com/watch?v=4T19U81s4kY) | Installing HWIC-2T cards, DCE/DTE cabling, clock rate configuration. |
-| **Cisco IOS CLI Navigation & Show Commands** | NetworkChuck | [Watch on YouTube](https://www.youtube.com/watch?v=OU-A2EmVrKQ) | `show version`, `show controllers`, command history, clock setting. |
